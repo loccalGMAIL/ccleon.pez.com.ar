@@ -51,20 +51,30 @@
       </li><!-- End Login Page Nav -->
 
       <li class="nav-item">
-        <a class="nav-link collapsed" href="{{route('usuarios')}}">
-          <i class="fa-solid fa-users"></i>
-          <span>Usuarios</span>
-        </a>
-      </li><!-- End Login Page Nav -->
-
-      <li class="nav-item">
         <a class="nav-link collapsed" href="{{route('informes')}}">
           <i class="bi bi-menu-button-wide"></i>
           <span>Informes</span>
         </a>
-      </li><!-- End Error 404 Page Nav -->
+      </li><!-- End Informes Nav -->
+
+      <li class="nav-item">
+        <a class="nav-link collapsed" data-bs-target="#configuracion-nav" data-bs-toggle="collapse" href="#">
+          <i class="bi bi-gear"></i><span>Configuracion</span><i class="bi bi-chevron-down ms-auto"></i>
+        </a>
+        <ul id="configuracion-nav" class="nav-content collapse" data-bs-parent="#sidebar-nav">
+          <li>
+            <a href="{{route('usuarios')}}">
+              <i class="bi bi-circle"></i><span>Usuarios</span>
+            </a>
+          </li>
+        </ul>
+      </li><!-- End Configuracion Nav -->
       @endcan
 
     </ul>
+
+    <div class="text-center text-muted position-absolute bottom-0 start-0 end-0 pb-3" style="font-size: 0.75rem;">
+      v{{ config('version.number') }}
+    </div>
 
   </aside>

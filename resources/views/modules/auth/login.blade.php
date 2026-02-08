@@ -68,7 +68,10 @@
                 </div>
               </div>
 
-              <div class="credits">                
+              <div class="credits">
+                <small class="text-muted d-block text-center">v{{ config('version.number') }}</small>
+                <br>
+
                 Designed by <a target="_blank" href="https://pez.com.ar">Pez</a>
               </div>
 
