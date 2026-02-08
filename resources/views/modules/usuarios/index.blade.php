@@ -41,7 +41,7 @@
                                     <tr>
                                         <th class="text-center">Nombre</th>
                                         <th class="text-center">Email</th>
-                                        <th class="text-center">Rol</th>
+                                        <th class="text-center">Perfil</th>
                                         <th class="text-center">Activo</th>
                                         <th class="text-center">Acciones</th>
                                     </tr>
@@ -51,7 +51,7 @@
                                         <tr class="text-center">
                                             <td>{{ $item->name }}</td>
                                             <td>{{ $item->email }}</td>
-                                            <td>{{ $item->rol }}</td>
+                                            <td>{{ $item->perfil->nombre }}</td>
                                             <td>
                                               <div class="form-check form-switch">
                                                 <input class="form-check-input cambiar-estado" type="checkbox" id="activo{{ $item->id }}" 

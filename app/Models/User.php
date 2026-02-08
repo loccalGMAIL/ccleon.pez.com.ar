@@ -21,7 +21,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
-        'role',
+        'perfil_id',
         'activo',
     ];
 
@@ -35,6 +35,8 @@ class User extends Authenticatable
         'remember_token',
     ];
 
+    protected $with = ['perfil'];
+
     /**
      * Get the attributes that should be cast.
      *
@@ -46,5 +48,15 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    public function perfil()
+    {
+        return $this->belongsTo(Perfil::class);
+    }
+
+    public function tieneAcceso(string $modulo): bool
+    {
+        return $this->perfil && $this->perfil->tieneModulo($modulo);
     }
 }

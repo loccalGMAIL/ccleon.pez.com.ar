@@ -32,11 +32,12 @@
                 <input type="text" class="form-control" name="email" id="email" required value="{{$item->email}}">
                 <label for="password">Password</label>
                 <input type="password" class="form-control" name="password" id="password" required value="{{$item->password}}">
-                <label for="rol">Rol de Usuario</label>
-                <select name="rol" id="rol" class="form-control">
-                  <option value=""></option>
-                  <option value="admin" {{ $item->rol == 'admin' ? 'selected' : '' }}>Administrador</option>
-                  <option value="usuario" {{ $item->rol == 'usuario' ? 'selected' : '' }}>Usuario</option>
+                <label for="perfil_id">Perfil</label>
+                <select name="perfil_id" id="perfil_id" class="form-control" required>
+                  <option value="">Seleccionar perfil...</option>
+                  @foreach($perfiles as $perfil)
+                    <option value="{{ $perfil->id }}" {{ $item->perfil_id == $perfil->id ? 'selected' : '' }}>{{ $perfil->nombre }}</option>
+                  @endforeach
                 </select>
                 <button class="btn btn-primary mt-3">Guardar</button>
                 <a href="{{route('usuarios')}}" class="btn btn-info mt-3">Cancelar</a>

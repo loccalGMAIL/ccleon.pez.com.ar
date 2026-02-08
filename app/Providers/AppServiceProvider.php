@@ -21,12 +21,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //gates para los roles
-        Gate::define('ver-admin', function (User $user) {
-            return $user->rol == 'admin';
-        });
-        Gate::define('ver-todos', function ($user) {
-            return in_array($user->rol, ['admin', 'usuario']);
-        });
+        // Gates dinamicos por modulo
+        $modulos = config('modulos', []);
+        foreach ($modulos as $clave => $modulo) {
+            Gate::define("acceso-{$clave}", function (User $user) use ($clave) {
+                return $user->tieneAcceso($clave);
+            });
+        }
     }
 }

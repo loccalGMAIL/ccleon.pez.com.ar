@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Perfil;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -14,7 +15,7 @@ class Usuarios extends Controller
     public function index()
     {
         $titulo = 'Usuarios';
-        $items = User::all();
+        $items = User::with('perfil')->get();
         return view('modules.usuarios.index', compact('titulo', 'items'));
     }
 
@@ -24,7 +25,8 @@ class Usuarios extends Controller
     public function create()
     {
         $titulo = 'Crear Usuario';
-        return view('modules.usuarios.create', compact('titulo'));
+        $perfiles = Perfil::all();
+        return view('modules.usuarios.create', compact('titulo', 'perfiles'));
     }
 
     /**
@@ -38,7 +40,7 @@ class Usuarios extends Controller
                 'email' => request('email'),
                 'password' => Hash::make(request('password')),
                 'activo' => true,
-                'rol' => request('rol')
+                'perfil_id' => request('perfil_id')
             ]
         );
         return to_route('usuarios');
@@ -59,7 +61,8 @@ class Usuarios extends Controller
     {
         $titulo = 'Editar Usuario';
         $item = User::find($id);
-        return view('modules.usuarios.edit', compact('titulo', 'item'));
+        $perfiles = Perfil::all();
+        return view('modules.usuarios.edit', compact('titulo', 'item', 'perfiles'));
     }
 
     /**
@@ -71,7 +74,7 @@ class Usuarios extends Controller
         $item->name = request('name');
         $item->email = request('email');
         $item->password = Hash::make(request('password'));
-        $item->rol = request('rol');
+        $item->perfil_id = request('perfil_id');
         $item->save();
         return to_route('usuarios');
     }
