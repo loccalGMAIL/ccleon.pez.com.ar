@@ -46,6 +46,11 @@ return [
         'descripcion' => 'Administracion de perfiles y permisos',
         'icono' => 'fa-solid fa-shield-halved',
     ],
+    'logistica' => [
+        'nombre' => 'Logistica',
+        'descripcion' => 'Seguimiento de pedidos y entregas',
+        'icono' => 'fa-solid fa-truck-fast',
+    ],
     'configuracion' => [
         'nombre' => 'Configuracion General',
         'descripcion' => 'Configuracion general del sistema',
