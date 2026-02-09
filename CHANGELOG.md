@@ -11,6 +11,12 @@ y este proyecto sigue [Versionado Semantico](https://semver.org/lang/es/).
 - CRUD completo de **Productos** por proveedor (PR #24, #28)
 - Cotizacion del dolar con botones de actualizacion (PR #25, #27)
 - Correciones de numeracion y tamanio de botones en productos (PR #26)
+- Modulo de **Perfiles**: sistema de permisos por modulo con middleware Checkrol
+- **Foto de perfil** y pagina Mi Perfil para cada usuario
+- Modulo **Configuracion**: reinicio anual de numeracion de remitos + filtro por año
+- **Sistema de auditoria**: registro de actividad con 35 puntos de auditoria en 11 controllers
+- **Permisos en Dashboard**: botones visibles segun perfil del usuario
+- Enlace para contactar al administrador en el login
 
 ## [1.0.0] - 2025-XX-XX
 
