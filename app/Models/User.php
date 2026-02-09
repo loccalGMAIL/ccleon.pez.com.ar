@@ -23,6 +23,7 @@ class User extends Authenticatable
         'password',
         'perfil_id',
         'activo',
+        'foto',
     ];
 
     /**
@@ -53,6 +54,13 @@ class User extends Authenticatable
     public function perfil()
     {
         return $this->belongsTo(Perfil::class);
+    }
+
+    public function getFotoUrlAttribute(): string
+    {
+        return $this->foto
+            ? asset('storage/fotos_perfil/' . $this->foto)
+            : asset('NiceAdmin/assets/img/profile-img.jpg');
     }
 
     public function tieneAcceso(string $modulo): bool

@@ -23,6 +23,8 @@ Route::post('/loguear', [AuthController::class, 'loguear'])->name('loguear');
 
 Route::middleware(['auth'])->group(function () {
     Route::get('/home', [Dashboard::class, 'index'])->name('home');
+    Route::get('/mi-perfil', [Usuarios::class, 'miPerfil'])->name('mi-perfil');
+    Route::put('/mi-perfil/actualizar', [Usuarios::class, 'actualizarPerfil'])->name('mi-perfil.actualizar');
 });
 
 

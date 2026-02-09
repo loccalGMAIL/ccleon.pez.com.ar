@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\Perfil;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 
 class Usuarios extends Controller
 {
@@ -34,15 +36,20 @@ class Usuarios extends Controller
      */
     public function store(Request $request)
     {
-        User::create(
-            [
-                'name' => request('name'),
-                'email' => request('email'),
-                'password' => Hash::make(request('password')),
-                'activo' => true,
-                'perfil_id' => request('perfil_id')
-            ]
-        );
+        $data = [
+            'name' => request('name'),
+            'email' => request('email'),
+            'password' => Hash::make(request('password')),
+            'activo' => true,
+            'perfil_id' => request('perfil_id')
+        ];
+
+        if ($request->hasFile('foto')) {
+            $data['foto'] = $request->file('foto')->store('fotos_perfil', 'public');
+            $data['foto'] = basename($data['foto']);
+        }
+
+        User::create($data);
         return to_route('usuarios');
     }
 
@@ -75,6 +82,14 @@ class Usuarios extends Controller
         $item->email = request('email');
         $item->password = Hash::make(request('password'));
         $item->perfil_id = request('perfil_id');
+
+        if ($request->hasFile('foto')) {
+            if ($item->foto) {
+                Storage::disk('public')->delete('fotos_perfil/' . $item->foto);
+            }
+            $item->foto = basename($request->file('foto')->store('fotos_perfil', 'public'));
+        }
+
         $item->save();
         return to_route('usuarios');
     }
@@ -92,6 +107,48 @@ class Usuarios extends Controller
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => 'Error al eliminar el usuario']);
         }
+    }
+
+    public function miPerfil()
+    {
+        $titulo = 'Mi Perfil';
+        $user = Auth::user();
+        return view('modules.usuarios.mi-perfil', compact('titulo', 'user'));
+    }
+
+    public function actualizarPerfil(Request $request)
+    {
+        $rules = [
+            'foto' => 'nullable|image|max:2048',
+        ];
+
+        if ($request->filled('password')) {
+            $rules['password'] = 'min:6|confirmed';
+        }
+
+        $request->validate($rules, [
+            'password.min' => 'La contraseña debe tener al menos 6 caracteres.',
+            'password.confirmed' => 'Las contraseñas no coinciden.',
+            'foto.image' => 'El archivo debe ser una imagen válida.',
+            'foto.max' => 'La imagen no debe superar los 2 MB.',
+        ]);
+
+        $user = Auth::user();
+
+        if ($request->filled('password')) {
+            $user->password = Hash::make($request->password);
+        }
+
+        if ($request->hasFile('foto')) {
+            if ($user->foto) {
+                Storage::disk('public')->delete('fotos_perfil/' . $user->foto);
+            }
+            $user->foto = basename($request->file('foto')->store('fotos_perfil', 'public'));
+        }
+
+        $user->save();
+
+        return redirect()->back()->with('success', 'Perfil actualizado correctamente.');
     }
 
     public function estado(Request $request, $id)
