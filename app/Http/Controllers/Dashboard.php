@@ -12,20 +12,41 @@ use Illuminate\Support\Facades\DB;
 
 class Dashboard extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $titulo = 'Dashboard';
 
         $proveedores = Proveedor::where('estadoProveedor', '1')->get();
 
+        // Años disponibles
+        $anios = rto::selectRaw('YEAR(fechaIngresoRto) as anio')
+            ->distinct()
+            ->orderBy('anio', 'desc')
+            ->pluck('anio');
+
+        $anioActual = (int) date('Y');
+        if (!$anios->contains($anioActual)) {
+            $anios->prepend($anioActual);
+            $anios = $anios->sortDesc()->values();
+        }
+
+        $anioSeleccionado = $request->get('anio', $anioActual);
+        $filtrarPorAnio = $anioSeleccionado !== 'todos';
+
         // Métricas generales
-        $totalRemitos = rto::count();
-        $remitosEnEspera = rto::where('estado', 'Espera')->count();
-        $remitosConDeuda = rto::where('estado', 'Deuda')->count();
-        $remitosPagados = rto::where('estado', 'Pagado')->count();
+        $queryBase = rto::query();
+        if ($filtrarPorAnio) {
+            $queryBase = $queryBase->whereYear('fechaIngresoRto', $anioSeleccionado);
+        }
+
+        $totalRemitos = (clone $queryBase)->count();
+        $remitosEnEspera = (clone $queryBase)->where('estado', 'Espera')->count();
+        $remitosConDeuda = (clone $queryBase)->where('estado', 'Deuda')->count();
+        $remitosPagados = (clone $queryBase)->where('estado', 'Pagado')->count();
 
         // Remitos recientes
         $remitosRecientes = rto::with('proveedor')
+            ->when($filtrarPorAnio, fn($q) => $q->whereYear('fechaIngresoRto', $anioSeleccionado))
             ->orderBy('fechaIngresoRto', 'desc')
             ->limit(5)
             ->get();
@@ -36,14 +57,20 @@ class Dashboard extends Controller
         $totalReclamos = Reclamo::where('estadoReclamoRto', 'pendiente')->count();
         $totalObservaciones = Observacion::count();
 
-
-        // Datos para el gráfico de remitos por mes (últimos 6 meses)
-        $remitosPorMes = rto::select(
+        // Datos para el gráfico de remitos por mes
+        $remitosPorMesQuery = rto::select(
             DB::raw('MONTH(fechaIngresoRto) as mes'),
             DB::raw('YEAR(fechaIngresoRto) as año'),
             DB::raw('COUNT(*) as total')
-        )
-            ->whereRaw('fechaIngresoRto >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)')
+        );
+
+        if ($filtrarPorAnio) {
+            $remitosPorMesQuery->whereYear('fechaIngresoRto', $anioSeleccionado);
+        } else {
+            $remitosPorMesQuery->whereRaw('fechaIngresoRto >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)');
+        }
+
+        $remitosPorMes = $remitosPorMesQuery
             ->groupBy('año', 'mes')
             ->orderBy('año', 'asc')
             ->orderBy('mes', 'asc')
@@ -60,12 +87,18 @@ class Dashboard extends Controller
         }
 
         // Facturación total por proveedor
-        $facturacionPorProveedor = rto::select(
+        $facturacionQuery = rto::select(
             'proveedores.nombreProveedor',
             DB::raw('SUM(rto.totalFinalRto) as facturacion')
         )
             ->join('proveedores', 'rto.proveedores_id', '=', 'proveedores.id')
-            ->whereNotNull('rto.totalFinalRto')
+            ->whereNotNull('rto.totalFinalRto');
+
+        if ($filtrarPorAnio) {
+            $facturacionQuery->whereYear('rto.fechaIngresoRto', $anioSeleccionado);
+        }
+
+        $facturacionPorProveedor = $facturacionQuery
             ->groupBy('proveedores.nombreProveedor')
             ->orderBy('facturacion', 'desc')
             ->limit(5)
@@ -88,7 +121,9 @@ class Dashboard extends Controller
             'mesesData',
             'proveedoresLabels',
             'proveedoresData',
-            'proveedores'
+            'proveedores',
+            'anios',
+            'anioSeleccionado'
         ));
     }
 }

@@ -42,6 +42,17 @@
                                 <a href="{{ route('observaciones') }}" class="btn btn-success">
                                     <i class="fa-solid fa-eye"></i> Ver Observaciones
                                 </a>
+
+                                <!-- Filtro por Año -->
+                                <div class="d-flex align-items-center ms-auto">
+                                    <label for="filtroAnioDash" class="form-label me-2 mb-0"><strong>Año:</strong></label>
+                                    <select id="filtroAnioDash" class="form-select form-select-sm" style="width: auto;" onchange="window.location.href=this.value">
+                                        <option value="{{ route('home') }}?anio=todos" {{ $anioSeleccionado == 'todos' ? 'selected' : '' }}>Todos</option>
+                                        @foreach($anios as $anio)
+                                            <option value="{{ route('home') }}?anio={{ $anio }}" {{ $anioSeleccionado == $anio ? 'selected' : '' }}>{{ $anio }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
                             </div>
                         </div>
                     </div>

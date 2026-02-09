@@ -9,15 +9,30 @@ use App\Models\RtoDetalle;
 
 class RtoController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $titulo = 'Remitos';
+
+        $anios = rto::selectRaw('YEAR(fechaIngresoRto) as anio')
+            ->distinct()
+            ->orderBy('anio', 'desc')
+            ->pluck('anio');
+
+        $anioActual = (int) date('Y');
+        if (!$anios->contains($anioActual)) {
+            $anios->prepend($anioActual);
+            $anios = $anios->sortDesc()->values();
+        }
+
+        $anioSeleccionado = $request->get('anio', $anioActual);
+
         $items = rto::with(['proveedor'])
             ->withCount('observaciones', 'reclamos')
+            ->whereYear('fechaIngresoRto', $anioSeleccionado)
             ->orderBy('fechaIngresoRto', 'desc')
             ->get();
         $proveedores = Proveedor::where('estadoProveedor', '1')->get();
-        return view('modules.rto.index', compact('titulo', 'items', 'proveedores'));
+        return view('modules.rto.index', compact('titulo', 'items', 'proveedores', 'anios', 'anioSeleccionado'));
     }
 
     public function actualizar(Request $request, $id)
@@ -149,25 +164,32 @@ class RtoController extends Controller
             ->with('success', 'Remito actualizado correctamente');
     }
 
-    public function pendientes()
+    public function pendientes(Request $request)
     {
         $titulo = 'Remitos Pendientes';
         $proveedores = Proveedor::where('estadoProveedor', '1')->get();
 
+        $anios = rto::selectRaw('YEAR(fechaIngresoRto) as anio')
+            ->distinct()
+            ->orderBy('anio', 'desc')
+            ->pluck('anio');
 
-        // Si tienes un campo 'estado' en la tabla
+        $anioActual = (int) date('Y');
+        if (!$anios->contains($anioActual)) {
+            $anios->prepend($anioActual);
+            $anios = $anios->sortDesc()->values();
+        }
+
+        $anioSeleccionado = $request->get('anio', $anioActual);
+
         $items = rto::where('estado', 'Espera')
         ->with(['proveedor'])
         ->withCount('observaciones', 'reclamos')
+        ->whereYear('fechaIngresoRto', $anioSeleccionado)
         ->orderBy('fechaIngresoRto', 'desc')
         ->get();
-        // Si infieres el estado a partir de otros campos
-        // $remitosPendientes = Rto::whereNull('totalFinalRto')
-        //                       ->with(['proveedor', 'camion'])
-        //                       ->orderBy('fechaIngresoRto', 'desc')
-        //                       ->get();
-        
-        return view('modules.rto.pendientes', compact('items', 'titulo', 'proveedores'));
+
+        return view('modules.rto.pendientes', compact('items', 'titulo', 'proveedores', 'anios', 'anioSeleccionado'));
     }
 
     public function actualizarEstado(Request $request, $id)

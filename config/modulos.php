@@ -46,4 +46,9 @@ return [
         'descripcion' => 'Administracion de perfiles y permisos',
         'icono' => 'fa-solid fa-shield-halved',
     ],
+    'configuracion' => [
+        'nombre' => 'Configuracion General',
+        'descripcion' => 'Configuracion general del sistema',
+        'icono' => 'bi bi-gear-wide-connected',
+    ],
 ];

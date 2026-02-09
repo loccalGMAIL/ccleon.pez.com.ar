@@ -13,6 +13,7 @@ use App\Http\Controllers\Informes;
 use App\Http\Controllers\ProductosController;
 use App\Http\Controllers\RtoDetalleController;
 use App\Http\Controllers\Perfiles;
+use App\Http\Controllers\ConfiguracionController;
 
 // Crear usuario admin (Solo usar una vez)
 // Route::get('/crear-admin',[AuthController::class, 'crearAdmin'])->name('crear-admin');
@@ -108,4 +109,10 @@ Route::prefix('perfiles')->middleware(['auth', 'Checkrol:perfiles'])->group(func
     Route::get('/edit/{id}', [Perfiles::class, 'edit'])->name('perfiles.edit');
     Route::put('/update/{id}', [Perfiles::class, 'update'])->name('perfiles.update');
     Route::delete('/destroy/{id}', [Perfiles::class, 'destroy'])->name('perfiles.destroy');
+});
+
+Route::prefix('configuracion')->middleware(['auth', 'Checkrol:configuracion'])->group(function () {
+    Route::get('/', [ConfiguracionController::class, 'index'])->name('configuracion');
+    Route::get('/numeracion', [ConfiguracionController::class, 'numeracion'])->name('configuracion.numeracion');
+    Route::post('/reiniciar-numeracion', [ConfiguracionController::class, 'reiniciarNumeracion'])->name('configuracion.reiniciar-numeracion');
 });

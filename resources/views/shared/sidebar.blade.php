@@ -66,7 +66,7 @@
       </li><!-- End Informes Nav -->
 @endcan
 
-@if(Auth::check() && (Auth::user()->tieneAcceso('usuarios') || Auth::user()->tieneAcceso('perfiles')))
+@if(Auth::check() && (Auth::user()->tieneAcceso('usuarios') || Auth::user()->tieneAcceso('perfiles') || Auth::user()->tieneAcceso('configuracion')))
       <li class="nav-item">
         <a class="nav-link collapsed" data-bs-target="#configuracion-nav" data-bs-toggle="collapse" href="#">
           <i class="bi bi-gear"></i><span>Configuracion</span><i class="bi bi-chevron-down ms-auto"></i>
@@ -83,6 +83,13 @@
           <li>
             <a href="{{route('perfiles')}}">
               <i class="bi bi-circle"></i><span>Perfiles</span>
+            </a>
+          </li>
+          @endcan
+          @can('acceso-configuracion')
+          <li>
+            <a href="{{route('configuracion')}}">
+              <i class="bi bi-circle"></i><span>General</span>
             </a>
           </li>
           @endcan
