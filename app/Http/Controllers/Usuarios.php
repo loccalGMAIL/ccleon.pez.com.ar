@@ -2,9 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Perfil;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
+use App\Models\AuditLog;
 
 class Usuarios extends Controller
 {
@@ -14,7 +18,7 @@ class Usuarios extends Controller
     public function index()
     {
         $titulo = 'Usuarios';
-        $items = User::all();
+        $items = User::with('perfil')->get();
         return view('modules.usuarios.index', compact('titulo', 'items'));
     }
 
@@ -24,7 +28,8 @@ class Usuarios extends Controller
     public function create()
     {
         $titulo = 'Crear Usuario';
-        return view('modules.usuarios.create', compact('titulo'));
+        $perfiles = Perfil::all();
+        return view('modules.usuarios.create', compact('titulo', 'perfiles'));
     }
 
     /**
@@ -32,15 +37,23 @@ class Usuarios extends Controller
      */
     public function store(Request $request)
     {
-        User::create(
-            [
-                'name' => request('name'),
-                'email' => request('email'),
-                'password' => Hash::make(request('password')),
-                'activo' => true,
-                'rol' => request('rol')
-            ]
-        );
+        $data = [
+            'name' => request('name'),
+            'email' => request('email'),
+            'password' => Hash::make(request('password')),
+            'activo' => true,
+            'perfil_id' => request('perfil_id')
+        ];
+
+        if ($request->hasFile('foto')) {
+            $data['foto'] = $request->file('foto')->store('fotos_perfil', 'public');
+            $data['foto'] = basename($data['foto']);
+        }
+
+        $user = User::create($data);
+
+        AuditLog::registrar('usuarios', 'crear', "Creo usuario {$user->name}", 'User', $user->id, null, $user->toArray());
+
         return to_route('usuarios');
     }
 
@@ -59,7 +72,8 @@ class Usuarios extends Controller
     {
         $titulo = 'Editar Usuario';
         $item = User::find($id);
-        return view('modules.usuarios.edit', compact('titulo', 'item'));
+        $perfiles = Perfil::all();
+        return view('modules.usuarios.edit', compact('titulo', 'item', 'perfiles'));
     }
 
     /**
@@ -68,11 +82,24 @@ class Usuarios extends Controller
     public function update(Request $request, string $id)
     {
         $item = User::find($id);
+        $datosAnteriores = $item->toArray();
+
         $item->name = request('name');
         $item->email = request('email');
         $item->password = Hash::make(request('password'));
-        $item->rol = request('rol');
+        $item->perfil_id = request('perfil_id');
+
+        if ($request->hasFile('foto')) {
+            if ($item->foto) {
+                Storage::disk('public')->delete('fotos_perfil/' . $item->foto);
+            }
+            $item->foto = basename($request->file('foto')->store('fotos_perfil', 'public'));
+        }
+
         $item->save();
+
+        AuditLog::registrar('usuarios', 'editar', "Edito usuario {$item->name}", 'User', $item->id, $datosAnteriores, $item->fresh()->toArray());
+
         return to_route('usuarios');
     }
 
@@ -83,7 +110,11 @@ class Usuarios extends Controller
     {
         try {
             $item = User::findOrFail($id);
+            $datosAnteriores = $item->toArray();
+            $nombre = $item->name;
             $item->delete();
+
+            AuditLog::registrar('usuarios', 'eliminar', "Elimino usuario {$nombre}", 'User', (int) $id, $datosAnteriores);
 
             return response()->json(['success' => true, 'message' => 'Usuario eliminado correctamente']);
         } catch (\Exception $e) {
@@ -91,12 +122,60 @@ class Usuarios extends Controller
         }
     }
 
+    public function miPerfil()
+    {
+        $titulo = 'Mi Perfil';
+        $user = Auth::user();
+        return view('modules.usuarios.mi-perfil', compact('titulo', 'user'));
+    }
+
+    public function actualizarPerfil(Request $request)
+    {
+        $rules = [
+            'foto' => 'nullable|image|max:2048',
+        ];
+
+        if ($request->filled('password')) {
+            $rules['password'] = 'min:6|confirmed';
+        }
+
+        $request->validate($rules, [
+            'password.min' => 'La contraseña debe tener al menos 6 caracteres.',
+            'password.confirmed' => 'Las contraseñas no coinciden.',
+            'foto.image' => 'El archivo debe ser una imagen válida.',
+            'foto.max' => 'La imagen no debe superar los 2 MB.',
+        ]);
+
+        $user = Auth::user();
+
+        if ($request->filled('password')) {
+            $user->password = Hash::make($request->password);
+        }
+
+        if ($request->hasFile('foto')) {
+            if ($user->foto) {
+                Storage::disk('public')->delete('fotos_perfil/' . $user->foto);
+            }
+            $user->foto = basename($request->file('foto')->store('fotos_perfil', 'public'));
+        }
+
+        $user->save();
+
+        AuditLog::registrar('usuarios', 'editar_perfil', "Actualizo su perfil");
+
+        return redirect()->back()->with('success', 'Perfil actualizado correctamente.');
+    }
+
     public function estado(Request $request, $id)
     {
         try {
             $item = User::findOrFail($id);
-            $item->activo = $request->input('activo'); // Actualizar el estado con el valor recibido
+            $estadoAnterior = $item->activo;
+            $item->activo = $request->input('activo');
             $item->save();
+
+            $estadoTexto = $item->activo ? 'activo' : 'inactivo';
+            AuditLog::registrar('usuarios', 'cambiar_estado', "Cambio estado de usuario {$item->name} a {$estadoTexto}", 'User', $item->id, ['activo' => $estadoAnterior], ['activo' => $item->activo]);
 
             return response()->json(['success' => true, 'message' => 'Estado de usuario actualizado correctamente']);
         } catch (\Exception $e) {

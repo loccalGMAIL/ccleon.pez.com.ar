@@ -25,9 +25,13 @@
         <div class="card-body">
         <h5 class="card-title">Remitos en Espera</h5>
 
-        <a href="#" class="btn btn-primary mt-3 mb-3" data-bs-toggle="modal" data-bs-target="#agregarRemitoModal">
-          <i class="fa-solid fa-circle-plus"></i> Agregar nuevo remito
-        </a>
+        <div class="d-flex justify-content-between align-items-center mb-3 mt-3">
+          <a href="#" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#agregarRemitoModal">
+            <i class="fa-solid fa-circle-plus"></i> Agregar nuevo remito
+          </a>
+          @include('modules.rto.partials.filtroAnio')
+        </div>
+
         <!-- Table with stripped rows -->
         <table class="table datatable">
           <thead>

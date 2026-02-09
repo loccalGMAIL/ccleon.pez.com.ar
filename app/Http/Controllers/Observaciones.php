@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\AuditLog;
 use App\Models\Observacion;
 use App\Models\rto;
 
@@ -39,11 +40,13 @@ class Observaciones extends Controller
             'descripcionObservacionesRto' => 'required|string',
         ]);
 
-        Observacion::create([
+        $observacion = Observacion::create([
             'Rto_id' => $request->Rto_id,
             'descripcionObservacionesRto' => $request->descripcionObservacionesRto,
-            'created_at' => now(), // Esto guardará la fecha seleccionada
+            'created_at' => now(),
         ]);
+
+        AuditLog::registrar('observaciones', 'crear', "Creo observacion en remito #{$request->Rto_id}", 'Observacion', $observacion->id, null, $observacion->toArray());
 
         return redirect()->back()->with('success', 'Observación agregada correctamente');
     }
@@ -84,10 +87,14 @@ class Observaciones extends Controller
         ]);
 
         $observacion = Observacion::findOrFail($id);
+        $datosAnteriores = $observacion->toArray();
+
         $observacion->update([
             'descripcionObservacionesRto' => $request->descripcionObservacionesRto,
-            'updated_at' => now(), // Esto guardará la fecha seleccionada
+            'updated_at' => now(),
         ]);
+
+        AuditLog::registrar('observaciones', 'editar', "Edito observacion #{$id}", 'Observacion', (int) $id, $datosAnteriores, $observacion->fresh()->toArray());
 
         return redirect()->back()->with('success', 'Observación actualizada correctamente');
     }
@@ -106,9 +113,12 @@ class Observaciones extends Controller
     public function destroy($id)
     {
         try {
-            $reclamo = Observacion::findOrFail($id); // Asegúrate de que el modelo sea correcto
+            $reclamo = Observacion::findOrFail($id);
+            $datosAnteriores = $reclamo->toArray();
             $reclamo->delete();
-    
+
+            AuditLog::registrar('observaciones', 'eliminar', "Elimino observacion #{$id}", 'Observacion', (int) $id, $datosAnteriores);
+
             return response()->json(['success' => true, 'message' => 'Reclamo eliminado correctamente']);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => 'Error al eliminar el reclamo: ' . $e->getMessage()]);

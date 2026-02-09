@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Camion;
 use App\Models\Proveedor;
 use Illuminate\Http\Request;
+use App\Models\AuditLog;
 
 class Proveedores extends Controller
 {
@@ -55,7 +56,9 @@ class Proveedores extends Controller
         $proveedor->direccionProveedor = $request->direccionProveedor;
         $proveedor->estadoProveedor = '1'; // Asegura que se establece como activo
         $proveedor->save();
-        
+
+        AuditLog::registrar('proveedores', 'crear', "Creo proveedor {$proveedor->nombreProveedor}", 'Proveedor', $proveedor->id, null, $proveedor->toArray());
+
         // Comprobar si la solicitud es AJAX
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json([
@@ -74,6 +77,9 @@ class Proveedores extends Controller
         $camion->patente = $request->patente;
         $camion->proveedores_id = $request->proveedor_id;
         $camion->save();
+
+        AuditLog::registrar('proveedores', 'crear', "Creo camion {$camion->patente}", 'Camion', $camion->id, null, $camion->toArray());
+
         return redirect()->route('proveedores.camiones');
     }
 
@@ -107,6 +113,8 @@ class Proveedores extends Controller
     public function update(Request $request, string $id)
     {
         $proveedor = Proveedor::find($id);
+        $datosAnteriores = $proveedor->toArray();
+
         $proveedor->nombreProveedor = $request->nombreProveedor;
         $proveedor->dniProveedor = $request->dniProveedor;
         $proveedor->razonSocialProveedor = $request->razonSocialProveedor;
@@ -115,14 +123,22 @@ class Proveedores extends Controller
         $proveedor->mailProveedor = $request->mailProveedor;
         $proveedor->direccionProveedor = $request->direccionProveedor;
         $proveedor->save();
+
+        AuditLog::registrar('proveedores', 'editar', "Edito proveedor {$proveedor->nombreProveedor}", 'Proveedor', $proveedor->id, $datosAnteriores, $proveedor->fresh()->toArray());
+
         return redirect()->route('proveedores');
     }
 
     public function updateCamiones(Request $request, string $id){
         $camion = Camion::find($id);
+        $datosAnteriores = $camion->toArray();
+
         $camion->patente = $request->patente;
         $camion->proveedores_id = $request->proveedor_id;
         $camion->save();
+
+        AuditLog::registrar('proveedores', 'editar', "Edito camion {$camion->patente}", 'Camion', $camion->id, $datosAnteriores, $camion->fresh()->toArray());
+
         return redirect()->route('proveedores.camiones');
     }
 
@@ -146,8 +162,12 @@ class Proveedores extends Controller
     {
         try {
             $proveedor = Proveedor::findOrFail($id);
-            $proveedor->estadoProveedor = $request->input('estadoProveedor'); // Actualizar el estado con el valor recibido
+            $estadoAnterior = $proveedor->estadoProveedor;
+            $proveedor->estadoProveedor = $request->input('estadoProveedor');
             $proveedor->save();
+
+            $estadoTexto = $proveedor->estadoProveedor == '1' ? 'activo' : 'inactivo';
+            AuditLog::registrar('proveedores', 'cambiar_estado', "Cambio estado de proveedor {$proveedor->nombreProveedor} a {$estadoTexto}", 'Proveedor', $proveedor->id, ['estadoProveedor' => $estadoAnterior], ['estadoProveedor' => $proveedor->estadoProveedor]);
 
             return response()->json(['success' => true, 'message' => 'Estado del proveedor actualizado correctamente']);
         } catch (\Exception $e) {

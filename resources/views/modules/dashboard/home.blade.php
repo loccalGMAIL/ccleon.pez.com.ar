@@ -22,6 +22,7 @@
                         <div class="card-body">
                             <h5 class="card-title">Acciones Rápidas</h5>
                             <div class="d-flex flex-wrap gap-4">
+                                @can('acceso-remitos')
                                 <!-- Botón Nuevo Remito -->
                                 <a href="#" class="btn btn-primary" data-bs-toggle="modal"
                                     data-bs-target="#agregarRemitoModal">
@@ -32,22 +33,39 @@
                                 <a href="{{ route('remitos.pendientes') }}" class="btn btn-warning">
                                     <i class="fa-solid fa-clipboard-list"></i> Remitos Pendientes
                                 </a>
+                                @endcan
 
+                                @can('acceso-reclamos')
                                 <!-- Botón Ver Reclamos -->
                                 <a href="{{ route('reclamos') }}" class="btn btn-danger">
                                     <i class="fa-solid fa-triangle-exclamation"></i> Ver Reclamos
                                 </a>
+                                @endcan
 
+                                @can('acceso-observaciones')
                                 <!-- Botón Ver Observaciones -->
                                 <a href="{{ route('observaciones') }}" class="btn btn-success">
                                     <i class="fa-solid fa-eye"></i> Ver Observaciones
                                 </a>
+                                @endcan
+
+                                <!-- Filtro por Año -->
+                                <div class="d-flex align-items-center ms-auto">
+                                    <label for="filtroAnioDash" class="form-label me-2 mb-0"><strong>Año:</strong></label>
+                                    <select id="filtroAnioDash" class="form-select form-select-sm" style="width: auto;" onchange="window.location.href=this.value">
+                                        <option value="{{ route('home') }}?anio=todos" {{ $anioSeleccionado == 'todos' ? 'selected' : '' }}>Todos</option>
+                                        @foreach($anios as $anio)
+                                            <option value="{{ route('home') }}?anio={{ $anio }}" {{ $anioSeleccionado == $anio ? 'selected' : '' }}>{{ $anio }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
+            @can('acceso-remitos')
             <!-- Tarjetas informativas -->
             <div class="row">
                 <!-- Tarjeta Total Remitos -->
@@ -209,6 +227,7 @@
             <!-- Modal remito -->
             @include('modules.rto.modalNvoRto')
             <!-- End Table with stripped rows -->
+            @endcan
         </section>
     </main>
 @endsection

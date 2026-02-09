@@ -4,29 +4,49 @@ use Illuminate\Http\Request;
 use App\Models\Proveedor;
 use App\Models\rto;
 use App\Models\Camion;
+use App\Models\AuditLog;
 use App\Models\ElementoRto;
 use App\Models\RtoDetalle;
 
 class RtoController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $titulo = 'Remitos';
+
+        $anios = rto::selectRaw('YEAR(fechaIngresoRto) as anio')
+            ->distinct()
+            ->orderBy('anio', 'desc')
+            ->pluck('anio');
+
+        $anioActual = (int) date('Y');
+        if (!$anios->contains($anioActual)) {
+            $anios->prepend($anioActual);
+            $anios = $anios->sortDesc()->values();
+        }
+
+        $anioSeleccionado = $request->get('anio', $anioActual);
+
         $items = rto::with(['proveedor'])
             ->withCount('observaciones', 'reclamos')
+            ->whereYear('fechaIngresoRto', $anioSeleccionado)
             ->orderBy('fechaIngresoRto', 'desc')
             ->get();
         $proveedores = Proveedor::where('estadoProveedor', '1')->get();
-        return view('modules.rto.index', compact('titulo', 'items', 'proveedores'));
+        return view('modules.rto.index', compact('titulo', 'items', 'proveedores', 'anios', 'anioSeleccionado'));
     }
 
     public function actualizar(Request $request, $id)
 {
     try {
         $remito = rto::findOrFail($id);
+        $datosAnteriores = $remito->toArray();
+
         $remito->fechaIngresoRto = $request->input('fechaIngresoRto');
         $remito->nroFacturaRto = $request->input('nroFacturaRto');
         $remito->save();
+
+        AuditLog::registrar('remitos', 'editar', "Actualizo remito #{$remito->camion}", 'Rto', $remito->id, $datosAnteriores, $remito->fresh()->toArray());
 
         return response()->json(['success' => true, 'message' => 'Remito actualizado correctamente']);
     } catch (\Exception $e) {
@@ -75,6 +95,8 @@ class RtoController extends Controller
 
         // Guardar el remito
         $remito->save();
+
+        AuditLog::registrar('remitos', 'crear', "Creo remito #{$remito->camion}", 'Rto', $remito->id, null, $remito->toArray());
 
         return redirect()->route('remitos.edit', $remito->id)
         ->with('success', 'Remito creado correctamente y redirigido a la edición.');
@@ -145,29 +167,38 @@ class RtoController extends Controller
 
         $remito->save();
 
+        AuditLog::registrar('remitos', 'editar', "Edito remito #{$remito->camion}", 'Rto', $remito->id, null, $remito->fresh()->toArray());
+
         return redirect()->route('remitos.edit', $id)
             ->with('success', 'Remito actualizado correctamente');
     }
 
-    public function pendientes()
+    public function pendientes(Request $request)
     {
         $titulo = 'Remitos Pendientes';
         $proveedores = Proveedor::where('estadoProveedor', '1')->get();
 
+        $anios = rto::selectRaw('YEAR(fechaIngresoRto) as anio')
+            ->distinct()
+            ->orderBy('anio', 'desc')
+            ->pluck('anio');
 
-        // Si tienes un campo 'estado' en la tabla
+        $anioActual = (int) date('Y');
+        if (!$anios->contains($anioActual)) {
+            $anios->prepend($anioActual);
+            $anios = $anios->sortDesc()->values();
+        }
+
+        $anioSeleccionado = $request->get('anio', $anioActual);
+
         $items = rto::where('estado', 'Espera')
         ->with(['proveedor'])
         ->withCount('observaciones', 'reclamos')
+        ->whereYear('fechaIngresoRto', $anioSeleccionado)
         ->orderBy('fechaIngresoRto', 'desc')
         ->get();
-        // Si infieres el estado a partir de otros campos
-        // $remitosPendientes = Rto::whereNull('totalFinalRto')
-        //                       ->with(['proveedor', 'camion'])
-        //                       ->orderBy('fechaIngresoRto', 'desc')
-        //                       ->get();
-        
-        return view('modules.rto.pendientes', compact('items', 'titulo', 'proveedores'));
+
+        return view('modules.rto.pendientes', compact('items', 'titulo', 'proveedores', 'anios', 'anioSeleccionado'));
     }
 
     public function actualizarEstado(Request $request, $id)
@@ -175,11 +206,14 @@ class RtoController extends Controller
         $request->validate([
             'estado' => 'required|in:Espera,Deuda,Pagado,Anulado'
         ]);
-        
+
         $remito = rto::findOrFail($id);
+        $estadoAnterior = $remito->estado;
         $remito->estado = $request->estado;
         $remito->save();
-        
+
+        AuditLog::registrar('remitos', 'cambiar_estado', "Cambio estado de remito #{$remito->camion} de {$estadoAnterior} a {$remito->estado}", 'Rto', $remito->id, ['estado' => $estadoAnterior], ['estado' => $remito->estado]);
+
         return response()->json(['success' => true]);
     }
 }

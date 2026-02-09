@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
+use App\Models\AuditLog;
 
 class AuthController extends Controller
 {
@@ -39,10 +40,13 @@ class AuthController extends Controller
         Auth::login($user);
         $request->session()->regenerate();
 
+        AuditLog::registrar('usuarios', 'login', "Inicio sesion");
+
         return to_route('home');
     }
 
     public function logout(){
+        AuditLog::registrar('usuarios', 'logout', "Cerro sesion");
         Auth::logout();
         return to_route('login');
     }

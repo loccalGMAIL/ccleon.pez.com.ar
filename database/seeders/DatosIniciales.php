@@ -34,13 +34,17 @@ class DatosIniciales extends Seeder
             ],
         ]);
 
+        // Obtener IDs de perfiles
+        $adminPerfilId = DB::table('perfiles')->where('nombre', 'Administrador')->value('id');
+        $operadorPerfilId = DB::table('perfiles')->where('nombre', 'Operador')->value('id');
+
         // Insertar usuarios
         DB::table('users')->insert([
             [
                 'name' => 'Raul Tribo',
                 'email' => 'raul@gmail.com',
                 'password' => Hash::make('Raul12345'),
-                'rol' => 'admin',
+                'perfil_id' => $adminPerfilId,
                 'activo' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -49,7 +53,7 @@ class DatosIniciales extends Seeder
                 'name' => 'Claudio',
                 'email' => 'c@c.com',
                 'password' => Hash::make('12345'),
-                'rol' => 'usuario',
+                'perfil_id' => $operadorPerfilId,
                 'activo' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),

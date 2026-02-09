@@ -25,9 +25,13 @@
         <h5 class="card-title">Listado de Remitos</h5>
         <p class="card-text">En esta sección podrá administrar los remitos de los envios.</p>
 
-        <a href="#" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#agregarRemitoModal">
-          <i class="fa-solid fa-circle-plus"></i> Agregar nuevo remito
-        </a>
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <a href="#" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#agregarRemitoModal">
+            <i class="fa-solid fa-circle-plus"></i> Agregar nuevo remito
+          </a>
+          @include('modules.rto.partials.filtroAnio')
+        </div>
+
         <!-- Table with stripped rows -->
         <table class="table datatable">
           <thead>

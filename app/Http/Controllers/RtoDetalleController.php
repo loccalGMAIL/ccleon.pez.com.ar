@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\RtoDetalle;
 use App\Models\ElementoRto;
 use App\Models\rto;
+use App\Models\AuditLog;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Validator;
@@ -59,7 +60,9 @@ class RtoDetalleController extends Controller
     
             // Actualizar el total en la tabla de RTO
             $this->actualizarTotalRto($request->rto_id);
-    
+
+            AuditLog::registrar('remitos', 'crear', "Agrego detalle al remito #{$request->rto_id}", 'RtoDetalle', $rtoDetalle->id, null, $rtoDetalle->toArray());
+
             // Redireccionar al detalle del remito con mensaje de éxito
             return redirect()->route('remitos.edit', ['id' => $request->rto_id])
                 ->with('success', 'Elemento agregado correctamente al remito');
@@ -175,6 +178,8 @@ class RtoDetalleController extends Controller
             $rto->totalFinalRto = $totalFinal;
             $rto->save();
     
+            AuditLog::registrar('remitos', 'editar', "Actualizo campo {$field} en detalle #{$id} del remito", 'RtoDetalle', (int) $id, ['campo' => $field, 'valor_anterior' => $request->input('value')], ['campo' => $field, 'valor_nuevo' => $detalle->$field]);
+
             return response()->json([
                 'success' => true,
                 'subtotal' => $detalle->subTotalRtoTeorico,
@@ -212,12 +217,15 @@ class RtoDetalleController extends Controller
         try {
             // Encuentra el detalle a eliminar
             $detalle = RtoDetalle::findOrFail($id);
-            
+            $datosAnteriores = $detalle->toArray();
+
             // Guarda el ID del remito para actualizar totales después
             $rtoId = $detalle->rto_id;
-            
+
             // Elimina el detalle
             $detalle->delete();
+
+            AuditLog::registrar('remitos', 'eliminar', "Elimino detalle del remito #{$rtoId}", 'RtoDetalle', (int) $id, $datosAnteriores);
             
             // Actualiza los totales
             $this->actualizarTotalRto($rtoId);

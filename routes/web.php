@@ -12,6 +12,8 @@ use App\Http\Controllers\Proveedores;
 use App\Http\Controllers\Informes;
 use App\Http\Controllers\ProductosController;
 use App\Http\Controllers\RtoDetalleController;
+use App\Http\Controllers\Perfiles;
+use App\Http\Controllers\ConfiguracionController;
 
 // Crear usuario admin (Solo usar una vez)
 // Route::get('/crear-admin',[AuthController::class, 'crearAdmin'])->name('crear-admin');
@@ -22,11 +24,13 @@ Route::post('/loguear', [AuthController::class, 'loguear'])->name('loguear');
 
 Route::middleware(['auth'])->group(function () {
     Route::get('/home', [Dashboard::class, 'index'])->name('home');
+    Route::get('/mi-perfil', [Usuarios::class, 'miPerfil'])->name('mi-perfil');
+    Route::put('/mi-perfil/actualizar', [Usuarios::class, 'actualizarPerfil'])->name('mi-perfil.actualizar');
 });
 
 
 
-Route::prefix('remitos')->middleware('auth')->group(function () {
+Route::prefix('remitos')->middleware(['auth', 'Checkrol:remitos'])->group(function () {
     Route::get('/', [RtoController::class, 'index'])->name('remitos');
     Route::post('/store', [RtoController::class, 'store'])->name('remitos.store');
     Route::get('/edit/{id}', [RtoController::class, 'edit'])->name('remitos.edit');
@@ -40,7 +44,7 @@ Route::prefix('remitos')->middleware('auth')->group(function () {
     Route::post('/remitos/actualizar/{id}', [RtoController::class, 'actualizar'])->name('actualizarRemito');
 });
 
-route::prefix('reclamos')->middleware('auth')->group(function () {
+Route::prefix('reclamos')->middleware(['auth', 'Checkrol:reclamos'])->group(function () {
     Route::get('/', [Reclamos::class, 'index'])->name('reclamos');
     Route::post('/reclamos', [Reclamos::class, 'store'])->name('reclamos.store');
     Route::put('/reclamos/{id}', [Reclamos::class, 'update'])->name('reclamos.update');
@@ -48,7 +52,7 @@ route::prefix('reclamos')->middleware('auth')->group(function () {
     Route::delete('/destroy/{id}', [Reclamos::class, 'destroy'])->name('reclamos.destroy');
 });
 
-route::prefix('observaciones')->middleware('auth')->group(function () {
+Route::prefix('observaciones')->middleware(['auth', 'Checkrol:observaciones'])->group(function () {
     Route::get('/', [Observaciones::class, 'index'])->name('observaciones');
     Route::post('/store', [Observaciones::class, 'store'])->name('observaciones.store');
     Route::get('/show/{remito}', [Observaciones::class, 'show'])->name('observaciones.show');
@@ -56,7 +60,7 @@ route::prefix('observaciones')->middleware('auth')->group(function () {
     Route::post('/destroy/{id}', [Observaciones::class, 'destroy'])->name('observaciones.destroy');
 });
 
-Route::prefix('usuarios')->middleware(['auth', 'Checkrol:admin'])->group(function () {
+Route::prefix('usuarios')->middleware(['auth', 'Checkrol:usuarios'])->group(function () {
     Route::get('/', [Usuarios::class, 'index'])->name('usuarios');
     Route::get('/create', [Usuarios::class, 'create'])->name('usuarios.create');
     Route::post('/store', [Usuarios::class, 'store'])->name('usuarios.store');
@@ -66,7 +70,7 @@ Route::prefix('usuarios')->middleware(['auth', 'Checkrol:admin'])->group(functio
     Route::delete('/destroy/{id}', [Usuarios::class, 'destroy'])->name('usuarios.destroy');
 });
 
-Route::prefix('proveedores')->middleware(['auth', 'Checkrol:admin'])->group(function () {
+Route::prefix('proveedores')->middleware(['auth', 'Checkrol:proveedores'])->group(function () {
     Route::get('/', [Proveedores::class, 'index'])->name('proveedores');
     Route::get('/create', [Proveedores::class, 'create'])->name('proveedores.create');
     Route::post('/store', [Proveedores::class, 'store'])->name('proveedores.store');
@@ -84,11 +88,11 @@ Route::prefix('proveedores')->middleware(['auth', 'Checkrol:admin'])->group(func
 
 });
 
-Route::prefix('informes')->middleware(['auth', 'Checkrol:admin'])->group(function () {
+Route::prefix('informes')->middleware(['auth', 'Checkrol:informes'])->group(function () {
     Route::get('/', [Informes::class, 'index'])->name('informes');
 });
 
-Route::prefix('productos')->middleware(['auth', 'Checkrol:admin'])->group(function () {
+Route::prefix('productos')->middleware(['auth', 'Checkrol:productos'])->group(function () {
     Route::get('/', [ProductosController::class, 'index'])->name('productos');
     Route::post('/cotizacion/guardar', [ProductosController::class, 'guardarCotizacion'])->name('cotizacion.guardar');
     Route::post('/cotizacion/actualizar-externa', [ProductosController::class, 'actualizarCotizacionExterna'])->name('cotizacion.actualizar-externa');
@@ -96,4 +100,21 @@ Route::prefix('productos')->middleware(['auth', 'Checkrol:admin'])->group(functi
     Route::get('/{id}/edit', [ProductosController::class, 'edit'])->name('productos.edit');
     Route::put('/update{id}', [ProductosController::class, 'update'])->name('productos.update');
     Route::delete('/delete{id}', [ProductosController::class, 'destroy'])->name('productos.destroy');
+});
+
+Route::prefix('perfiles')->middleware(['auth', 'Checkrol:perfiles'])->group(function () {
+    Route::get('/', [Perfiles::class, 'index'])->name('perfiles');
+    Route::get('/create', [Perfiles::class, 'create'])->name('perfiles.create');
+    Route::post('/store', [Perfiles::class, 'store'])->name('perfiles.store');
+    Route::get('/edit/{id}', [Perfiles::class, 'edit'])->name('perfiles.edit');
+    Route::put('/update/{id}', [Perfiles::class, 'update'])->name('perfiles.update');
+    Route::delete('/destroy/{id}', [Perfiles::class, 'destroy'])->name('perfiles.destroy');
+});
+
+Route::prefix('configuracion')->middleware(['auth', 'Checkrol:configuracion'])->group(function () {
+    Route::get('/', [ConfiguracionController::class, 'index'])->name('configuracion');
+    Route::get('/numeracion', [ConfiguracionController::class, 'numeracion'])->name('configuracion.numeracion');
+    Route::post('/reiniciar-numeracion', [ConfiguracionController::class, 'reiniciarNumeracion'])->name('configuracion.reiniciar-numeracion');
+    Route::get('/audit-log', [ConfiguracionController::class, 'auditLog'])->name('configuracion.audit-log');
+    Route::get('/audit-log/{id}', [ConfiguracionController::class, 'auditLogDetalle'])->name('configuracion.audit-log.detalle');
 });

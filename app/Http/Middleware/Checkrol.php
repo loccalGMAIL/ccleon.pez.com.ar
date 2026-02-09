@@ -11,15 +11,15 @@ class Checkrol
     /**
      * Handle an incoming request.
      */
-    public function handle(Request $request, Closure $next, $role)
+    public function handle(Request $request, Closure $next, $modulo)
     {
         // Verificar si el usuario está autenticado
         if (!Auth::check()) {
             return redirect()->route('login');
         }
 
-        // Verificar si el usuario tiene el rol requerido
-        if (Auth::user()->rol !== $role) {
+        // Verificar si el usuario tiene acceso al modulo
+        if (!Auth::user()->tieneAcceso($modulo)) {
             abort(403, 'No tienes permiso para acceder a esta página.');
         }
 
