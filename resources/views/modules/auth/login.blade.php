@@ -64,7 +64,15 @@
                     </div>
 
                   </form>
-
+                <div class="mt-6 text-center">
+                    <p class="text-sm text-gray-600">
+                        ¿No tienes una cuenta?<br>
+                        <a href="http://wa.me/+543541549674" target="_blank"
+                            class="font-medium text-blue-600 hover:text-blue-500 transition-colors duration-200">
+                            Contacta al administrador
+                        </a>
+                    </p>
+                </div>
                 </div>
               </div>
 
