@@ -6,6 +6,7 @@ use App\Models\Perfil;
 use App\Models\PerfilModulo;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Models\AuditLog;
 
 class Perfiles extends Controller
 {
@@ -43,6 +44,8 @@ class Perfiles extends Controller
             ]);
         }
 
+        AuditLog::registrar('perfiles', 'crear', "Creo perfil {$perfil->nombre}", 'Perfil', $perfil->id, null, array_merge($perfil->toArray(), ['modulos' => $request->modulos]));
+
         return to_route('perfiles');
     }
 
@@ -58,6 +61,7 @@ class Perfiles extends Controller
     public function update(Request $request, string $id)
     {
         $perfil = Perfil::findOrFail($id);
+        $datosAnteriores = array_merge($perfil->toArray(), ['modulos' => $perfil->modulos->pluck('modulo')->toArray()]);
 
         $request->validate([
             'nombre' => 'required|string|max:255|unique:perfiles,nombre,' . $perfil->id,
@@ -84,6 +88,8 @@ class Perfiles extends Controller
             ]);
         }
 
+        AuditLog::registrar('perfiles', 'editar', "Edito perfil {$perfil->nombre}", 'Perfil', $perfil->id, $datosAnteriores, array_merge($perfil->fresh()->toArray(), ['modulos' => $request->modulos]));
+
         return to_route('perfiles');
     }
 
@@ -99,7 +105,11 @@ class Perfiles extends Controller
                 ]);
             }
 
+            $datosAnteriores = array_merge($perfil->toArray(), ['modulos' => $perfil->modulos->pluck('modulo')->toArray()]);
+            $nombre = $perfil->nombre;
             $perfil->delete();
+
+            AuditLog::registrar('perfiles', 'eliminar', "Elimino perfil {$nombre}", 'Perfil', (int) $id, $datosAnteriores);
 
             return response()->json(['success' => true, 'message' => 'Perfil eliminado correctamente']);
         } catch (\Exception $e) {

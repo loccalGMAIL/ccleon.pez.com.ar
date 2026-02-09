@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use App\Models\Proveedor;
 use App\Models\rto;
 use App\Models\Camion;
+use App\Models\AuditLog;
 use App\Models\ElementoRto;
 use App\Models\RtoDetalle;
 
@@ -39,9 +40,13 @@ class RtoController extends Controller
 {
     try {
         $remito = rto::findOrFail($id);
+        $datosAnteriores = $remito->toArray();
+
         $remito->fechaIngresoRto = $request->input('fechaIngresoRto');
         $remito->nroFacturaRto = $request->input('nroFacturaRto');
         $remito->save();
+
+        AuditLog::registrar('remitos', 'editar', "Actualizo remito #{$remito->camion}", 'Rto', $remito->id, $datosAnteriores, $remito->fresh()->toArray());
 
         return response()->json(['success' => true, 'message' => 'Remito actualizado correctamente']);
     } catch (\Exception $e) {
@@ -90,6 +95,8 @@ class RtoController extends Controller
 
         // Guardar el remito
         $remito->save();
+
+        AuditLog::registrar('remitos', 'crear', "Creo remito #{$remito->camion}", 'Rto', $remito->id, null, $remito->toArray());
 
         return redirect()->route('remitos.edit', $remito->id)
         ->with('success', 'Remito creado correctamente y redirigido a la edición.');
@@ -160,6 +167,8 @@ class RtoController extends Controller
 
         $remito->save();
 
+        AuditLog::registrar('remitos', 'editar', "Edito remito #{$remito->camion}", 'Rto', $remito->id, null, $remito->fresh()->toArray());
+
         return redirect()->route('remitos.edit', $id)
             ->with('success', 'Remito actualizado correctamente');
     }
@@ -197,11 +206,14 @@ class RtoController extends Controller
         $request->validate([
             'estado' => 'required|in:Espera,Deuda,Pagado,Anulado'
         ]);
-        
+
         $remito = rto::findOrFail($id);
+        $estadoAnterior = $remito->estado;
         $remito->estado = $request->estado;
         $remito->save();
-        
+
+        AuditLog::registrar('remitos', 'cambiar_estado', "Cambio estado de remito #{$remito->camion} de {$estadoAnterior} a {$remito->estado}", 'Rto', $remito->id, ['estado' => $estadoAnterior], ['estado' => $remito->estado]);
+
         return response()->json(['success' => true]);
     }
 }

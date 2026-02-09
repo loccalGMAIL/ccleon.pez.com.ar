@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\AuditLog;
 Use App\Models\Reclamo;
 use App\Models\rto;
 
@@ -54,7 +55,7 @@ class Reclamos extends Controller
             'resolucionReclamoRto' => 'nullable|required_if:estadoReclamoRto,resuelto|string',
         ]);
 
-        Reclamo::create([
+        $reclamo = Reclamo::create([
             'Rto_id' => $request->Rto_id,
             'producto' => $request->producto,
             'cantidad' => $request->cantidad,
@@ -62,6 +63,8 @@ class Reclamos extends Controller
             'estadoReclamoRto' => $request->estadoReclamoRto,
             'resolucionReclamoRto' => $request->resolucionReclamoRto,
         ]);
+
+        AuditLog::registrar('reclamos', 'crear', "Creo reclamo en remito #{$request->Rto_id}", 'Reclamo', $reclamo->id, null, $reclamo->toArray());
 
         return redirect()->back()->with('success', 'Reclamo registrado correctamente');
     }
@@ -109,7 +112,10 @@ class Reclamos extends Controller
        ]);
 
        $reclamo = Reclamo::findOrFail($id);
+       $datosAnteriores = $reclamo->toArray();
        $reclamo->update($request->all());
+
+       AuditLog::registrar('reclamos', 'editar', "Edito reclamo #{$id}", 'Reclamo', (int) $id, $datosAnteriores, $reclamo->fresh()->toArray());
 
        return redirect()->back()->with('success', 'Reclamo actualizado correctamente');
    }
@@ -120,9 +126,12 @@ class Reclamos extends Controller
     public function destroy($id)
     {
         try {
-            $reclamo = Reclamo::findOrFail($id); // Asegúrate de que el modelo sea correcto
+            $reclamo = Reclamo::findOrFail($id);
+            $datosAnteriores = $reclamo->toArray();
             $reclamo->delete();
-    
+
+            AuditLog::registrar('reclamos', 'eliminar', "Elimino reclamo #{$id}", 'Reclamo', (int) $id, $datosAnteriores);
+
             return response()->json(['success' => true, 'message' => 'Reclamo eliminado correctamente']);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => 'Error al eliminar el reclamo: ' . $e->getMessage()]);

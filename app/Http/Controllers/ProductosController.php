@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
+use App\Models\AuditLog;
 use App\Models\Proveedor;
 use App\Models\Cotizacion;
 use App\Models\Producto;
@@ -65,6 +66,8 @@ class ProductosController extends Controller
 
             $producto->save();
 
+            AuditLog::registrar('productos', 'crear', "Creo producto {$producto->nombre}", 'Producto', $producto->id, null, $producto->toArray());
+
             // Redireccionar de vuelta con mensaje de éxito
             return redirect()->route('productos', ['proveedor_id' => $request->proveedores_id])
                 ->with('swal_success', 'Producto agregado correctamente');
@@ -115,6 +118,7 @@ class ProductosController extends Controller
 
         try {
             $producto = Producto::findOrFail($id);
+            $datosAnteriores = $producto->toArray();
 
             $producto->codigo = $request->codigo;
             $producto->codigoBarras = $request->codigoBarras;
@@ -125,6 +129,8 @@ class ProductosController extends Controller
             $producto->modificacion = $request->modificacion ?: now();
 
             $producto->save();
+
+            AuditLog::registrar('productos', 'editar', "Edito producto {$producto->nombre}", 'Producto', $producto->id, $datosAnteriores, $producto->fresh()->toArray());
 
             if ($request->wantsJson()) {
                 return response()->json([
@@ -158,9 +164,13 @@ class ProductosController extends Controller
     {
         try {
             $producto = Producto::findOrFail($id);
+            $datosAnteriores = $producto->toArray();
+            $nombre = $producto->nombre;
             $proveedorId = $producto->proveedores_id;
 
             $producto->delete();
+
+            AuditLog::registrar('productos', 'eliminar', "Elimino producto {$nombre}", 'Producto', (int) $id, $datosAnteriores);
 
             // Redirigir a la vista del proveedor seleccionado
             return redirect()->route('productos', ['proveedor_id' => $producto->proveedores_id])
@@ -225,7 +235,9 @@ class ProductosController extends Controller
             
             // Confirmar la transacción
             DB::commit();
-            
+
+            AuditLog::registrar('productos', 'actualizar_cotizacion', "Actualizo cotizacion del dolar a {$request->cotizacion}", 'Cotizacion', $cotizacion->id, null, ['precioDolar' => $cotizacion->precioDolar]);
+
             // Configurar SweetAlert para la confirmación
             return redirect()->back()->with('swal_success', 'Cotización del dólar actualizada correctamente y precios recalculados');
         } catch (\Exception $e) {
@@ -257,6 +269,8 @@ class ProductosController extends Controller
             // Actualizar el valor
             $cotizacion->precioDolar = $nuevaCotizacion;
             $cotizacion->save();
+
+            AuditLog::registrar('productos', 'actualizar_cotizacion', "Actualizo cotizacion externa a {$nuevaCotizacion} (Banco Nacion)", 'Cotizacion', $cotizacion->id, null, ['precioDolar' => $nuevaCotizacion]);
 
             return redirect()->back()->with('swal_success', "Cotización actualizada a $nuevaCotizacion (Banco Nación)");
         } catch (\Exception $e) {

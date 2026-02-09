@@ -115,4 +115,6 @@ Route::prefix('configuracion')->middleware(['auth', 'Checkrol:configuracion'])->
     Route::get('/', [ConfiguracionController::class, 'index'])->name('configuracion');
     Route::get('/numeracion', [ConfiguracionController::class, 'numeracion'])->name('configuracion.numeracion');
     Route::post('/reiniciar-numeracion', [ConfiguracionController::class, 'reiniciarNumeracion'])->name('configuracion.reiniciar-numeracion');
+    Route::get('/audit-log', [ConfiguracionController::class, 'auditLog'])->name('configuracion.audit-log');
+    Route::get('/audit-log/{id}', [ConfiguracionController::class, 'auditLogDetalle'])->name('configuracion.audit-log.detalle');
 });

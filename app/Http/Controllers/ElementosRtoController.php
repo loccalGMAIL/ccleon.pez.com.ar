@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\AuditLog;
 use App\Models\ElementoRto;
 use App\Models\rto;
 
@@ -17,7 +18,9 @@ class ElementosRtoController extends Controller
         $elemento = new ElementoRto();
         $elemento->descripcionElementoRto = $request->descripcionElementoRto;
         $elemento->save();
-        
+
+        AuditLog::registrar('remitos', 'crear', "Creo elemento RTO: {$elemento->descripcionElementoRto}", 'ElementoRto', $elemento->id, null, $elemento->toArray());
+
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json([
                 'success' => true,

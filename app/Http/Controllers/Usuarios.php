@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
+use App\Models\AuditLog;
 
 class Usuarios extends Controller
 {
@@ -49,7 +50,10 @@ class Usuarios extends Controller
             $data['foto'] = basename($data['foto']);
         }
 
-        User::create($data);
+        $user = User::create($data);
+
+        AuditLog::registrar('usuarios', 'crear', "Creo usuario {$user->name}", 'User', $user->id, null, $user->toArray());
+
         return to_route('usuarios');
     }
 
@@ -78,6 +82,8 @@ class Usuarios extends Controller
     public function update(Request $request, string $id)
     {
         $item = User::find($id);
+        $datosAnteriores = $item->toArray();
+
         $item->name = request('name');
         $item->email = request('email');
         $item->password = Hash::make(request('password'));
@@ -91,6 +97,9 @@ class Usuarios extends Controller
         }
 
         $item->save();
+
+        AuditLog::registrar('usuarios', 'editar', "Edito usuario {$item->name}", 'User', $item->id, $datosAnteriores, $item->fresh()->toArray());
+
         return to_route('usuarios');
     }
 
@@ -101,7 +110,11 @@ class Usuarios extends Controller
     {
         try {
             $item = User::findOrFail($id);
+            $datosAnteriores = $item->toArray();
+            $nombre = $item->name;
             $item->delete();
+
+            AuditLog::registrar('usuarios', 'eliminar', "Elimino usuario {$nombre}", 'User', (int) $id, $datosAnteriores);
 
             return response()->json(['success' => true, 'message' => 'Usuario eliminado correctamente']);
         } catch (\Exception $e) {
@@ -148,6 +161,8 @@ class Usuarios extends Controller
 
         $user->save();
 
+        AuditLog::registrar('usuarios', 'editar_perfil', "Actualizo su perfil");
+
         return redirect()->back()->with('success', 'Perfil actualizado correctamente.');
     }
 
@@ -155,8 +170,12 @@ class Usuarios extends Controller
     {
         try {
             $item = User::findOrFail($id);
-            $item->activo = $request->input('activo'); // Actualizar el estado con el valor recibido
+            $estadoAnterior = $item->activo;
+            $item->activo = $request->input('activo');
             $item->save();
+
+            $estadoTexto = $item->activo ? 'activo' : 'inactivo';
+            AuditLog::registrar('usuarios', 'cambiar_estado', "Cambio estado de usuario {$item->name} a {$estadoTexto}", 'User', $item->id, ['activo' => $estadoAnterior], ['activo' => $item->activo]);
 
             return response()->json(['success' => true, 'message' => 'Estado de usuario actualizado correctamente']);
         } catch (\Exception $e) {
