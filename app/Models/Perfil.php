@@ -23,6 +23,16 @@ class Perfil extends Model
         return $this->hasMany(User::class);
     }
 
+    public function proveedoresPermitidos()
+    {
+        return $this->hasMany(PerfilProveedor::class);
+    }
+
+    public function modulosRestringidos()
+    {
+        return $this->hasMany(PerfilRestriccionModulo::class);
+    }
+
     public function tieneModulo(string $modulo): bool
     {
         return $this->modulos->contains('modulo', $modulo);

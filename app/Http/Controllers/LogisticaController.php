@@ -11,8 +11,12 @@ class LogisticaController extends Controller
 {
     public function index()
     {
-        $items = Logistica::with('proveedor')->orderBy('fecha_pedido', 'desc')->get();
-        $proveedores = Proveedor::where('estadoProveedor', 1)->orderBy('razonSocialProveedor')->get();
+        $idsPermitidos = Proveedor::idsPermitidos('logistica');
+
+        $items = Logistica::with('proveedor')
+            ->when($idsPermitidos !== null, fn($q) => $q->whereIn('proveedores_id', $idsPermitidos))
+            ->orderBy('fecha_pedido', 'desc')->get();
+        $proveedores = Proveedor::permitidos('logistica')->where('estadoProveedor', 1)->orderBy('razonSocialProveedor')->get();
         $titulo = 'Logistica';
 
         return view('modules.logistica.index', compact('items', 'proveedores', 'titulo'));
@@ -77,11 +81,15 @@ class LogisticaController extends Controller
                 $value = null;
             }
 
-            // Para proveedores_id, validar que exista
+            // Para proveedores_id, validar que exista y que el usuario tenga permiso
             if ($field === 'proveedores_id') {
                 $proveedor = Proveedor::find($value);
                 if (!$proveedor) {
                     return response()->json(['success' => false, 'message' => 'Proveedor no valido']);
+                }
+                $idsPermitidos = Proveedor::idsPermitidos('logistica');
+                if ($idsPermitidos !== null && !in_array((int)$value, $idsPermitidos)) {
+                    return response()->json(['success' => false, 'message' => 'No tiene permiso para este proveedor']);
                 }
             }
 

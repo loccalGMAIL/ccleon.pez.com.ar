@@ -13,6 +13,7 @@ class RtoController extends Controller
     public function index(Request $request)
     {
         $titulo = 'Remitos';
+        $idsPermitidos = Proveedor::idsPermitidos('remitos');
 
         $anios = rto::selectRaw('YEAR(fechaIngresoRto) as anio')
             ->distinct()
@@ -29,10 +30,11 @@ class RtoController extends Controller
 
         $items = rto::with(['proveedor'])
             ->withCount('observaciones', 'reclamos')
+            ->when($idsPermitidos !== null, fn($q) => $q->whereIn('proveedores_id', $idsPermitidos))
             ->whereYear('fechaIngresoRto', $anioSeleccionado)
             ->orderBy('fechaIngresoRto', 'desc')
             ->get();
-        $proveedores = Proveedor::where('estadoProveedor', '1')->get();
+        $proveedores = Proveedor::permitidos('remitos')->where('estadoProveedor', '1')->get();
         return view('modules.rto.index', compact('titulo', 'items', 'proveedores', 'anios', 'anioSeleccionado'));
     }
 
@@ -57,7 +59,7 @@ class RtoController extends Controller
     public function create()
     {
         $titulo = 'Crear Remito';
-        $proveedores = Proveedor::where('estadoProveedor', '1')
+        $proveedores = Proveedor::permitidos('remitos')->where('estadoProveedor', '1')
             ->orderBy('razonSocialProveedor')
             ->get();
         return view('modules.rto.create', compact('titulo', 'proveedores'));
@@ -107,6 +109,12 @@ class RtoController extends Controller
         // Obtener el remito
         $items = Rto::with(['proveedor'])->findOrFail($id);
 
+        // Validar que el remito pertenece a un proveedor permitido
+        $idsPermitidos = Proveedor::idsPermitidos('remitos');
+        if ($idsPermitidos !== null && !in_array($items->proveedores_id, $idsPermitidos)) {
+            abort(403, 'No tiene permiso para acceder a este remito');
+        }
+
         // Cargar los detalles del remito
         $detalles = RtoDetalle::with('elemento')
             ->where('rto_id', $id)
@@ -114,8 +122,8 @@ class RtoController extends Controller
 
         $elementosRto = ElementoRto::all();
 
-        // Obtener todos los proveedores para el selector
-        $proveedores = Proveedor::where('estadoProveedor', '1')
+        // Obtener proveedores permitidos para el selector
+        $proveedores = Proveedor::permitidos('remitos')->where('estadoProveedor', '1')
             ->orderBy('razonSocialProveedor')
             ->get();
 
@@ -176,7 +184,8 @@ class RtoController extends Controller
     public function pendientes(Request $request)
     {
         $titulo = 'Remitos Pendientes';
-        $proveedores = Proveedor::where('estadoProveedor', '1')->get();
+        $idsPermitidos = Proveedor::idsPermitidos('remitos');
+        $proveedores = Proveedor::permitidos('remitos')->where('estadoProveedor', '1')->get();
 
         $anios = rto::selectRaw('YEAR(fechaIngresoRto) as anio')
             ->distinct()
@@ -194,6 +203,7 @@ class RtoController extends Controller
         $items = rto::where('estado', 'Espera')
         ->with(['proveedor'])
         ->withCount('observaciones', 'reclamos')
+        ->when($idsPermitidos !== null, fn($q) => $q->whereIn('proveedores_id', $idsPermitidos))
         ->whereYear('fechaIngresoRto', $anioSeleccionado)
         ->orderBy('fechaIngresoRto', 'desc')
         ->get();

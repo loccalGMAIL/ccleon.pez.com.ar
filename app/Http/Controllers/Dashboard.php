@@ -15,8 +15,9 @@ class Dashboard extends Controller
     public function index(Request $request)
     {
         $titulo = 'Dashboard';
+        $idsPermitidos = Proveedor::idsPermitidos('dashboard');
 
-        $proveedores = Proveedor::where('estadoProveedor', '1')->get();
+        $proveedores = Proveedor::permitidos('dashboard')->where('estadoProveedor', '1')->get();
 
         // Años disponibles
         $anios = rto::selectRaw('YEAR(fechaIngresoRto) as anio')
@@ -34,7 +35,8 @@ class Dashboard extends Controller
         $filtrarPorAnio = $anioSeleccionado !== 'todos';
 
         // Métricas generales
-        $queryBase = rto::query();
+        $queryBase = rto::query()
+            ->when($idsPermitidos !== null, fn($q) => $q->whereIn('proveedores_id', $idsPermitidos));
         if ($filtrarPorAnio) {
             $queryBase = $queryBase->whereYear('fechaIngresoRto', $anioSeleccionado);
         }
@@ -46,13 +48,14 @@ class Dashboard extends Controller
 
         // Remitos recientes
         $remitosRecientes = rto::with('proveedor')
+            ->when($idsPermitidos !== null, fn($q) => $q->whereIn('proveedores_id', $idsPermitidos))
             ->when($filtrarPorAnio, fn($q) => $q->whereYear('fechaIngresoRto', $anioSeleccionado))
             ->orderBy('fechaIngresoRto', 'desc')
             ->limit(5)
             ->get();
 
         // Conteos adicionales
-        $totalProveedores = Proveedor::where('estadoProveedor', '1')->count();
+        $totalProveedores = Proveedor::permitidos('dashboard')->where('estadoProveedor', '1')->count();
         $totalCamiones = Camion::count();
         $totalReclamos = Reclamo::where('estadoReclamoRto', 'pendiente')->count();
         $totalObservaciones = Observacion::count();
@@ -62,7 +65,8 @@ class Dashboard extends Controller
             DB::raw('MONTH(fechaIngresoRto) as mes'),
             DB::raw('YEAR(fechaIngresoRto) as año'),
             DB::raw('COUNT(*) as total')
-        );
+        )
+            ->when($idsPermitidos !== null, fn($q) => $q->whereIn('proveedores_id', $idsPermitidos));
 
         if ($filtrarPorAnio) {
             $remitosPorMesQuery->whereYear('fechaIngresoRto', $anioSeleccionado);
@@ -92,7 +96,8 @@ class Dashboard extends Controller
             DB::raw('SUM(rto.totalFinalRto) as facturacion')
         )
             ->join('proveedores', 'rto.proveedores_id', '=', 'proveedores.id')
-            ->whereNotNull('rto.totalFinalRto');
+            ->whereNotNull('rto.totalFinalRto')
+            ->when($idsPermitidos !== null, fn($q) => $q->whereIn('rto.proveedores_id', $idsPermitidos));
 
         if ($filtrarPorAnio) {
             $facturacionQuery->whereYear('rto.fechaIngresoRto', $anioSeleccionado);

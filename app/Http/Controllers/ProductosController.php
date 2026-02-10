@@ -15,7 +15,7 @@ class ProductosController extends Controller
     public function index(Request $request)
     {
         $titulo = 'Productos';
-        $proveedores = Proveedor::where('estadoProveedor', '1')->get();
+        $proveedores = Proveedor::permitidos('productos')->where('estadoProveedor', '1')->get();
         $cotizacion = Cotizacion::latest()->first();
         $proveedorSeleccionado = $request->query('proveedor_id');
         $productos = [];

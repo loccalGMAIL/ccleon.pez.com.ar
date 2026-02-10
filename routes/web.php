@@ -110,6 +110,9 @@ Route::prefix('perfiles')->middleware(['auth', 'Checkrol:perfiles'])->group(func
     Route::get('/edit/{id}', [Perfiles::class, 'edit'])->name('perfiles.edit');
     Route::put('/update/{id}', [Perfiles::class, 'update'])->name('perfiles.update');
     Route::delete('/destroy/{id}', [Perfiles::class, 'destroy'])->name('perfiles.destroy');
+    Route::get('/restricciones', [Perfiles::class, 'restricciones'])->name('perfiles.restricciones');
+    Route::get('/restricciones/{perfilId}', [Perfiles::class, 'getRestriccion'])->name('perfiles.getRestriccion');
+    Route::post('/restricciones/guardar', [Perfiles::class, 'guardarRestriccion'])->name('perfiles.guardarRestriccion');
 });
 
 Route::prefix('logistica')->middleware(['auth', 'Checkrol:logistica'])->group(function () {

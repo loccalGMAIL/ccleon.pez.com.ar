@@ -5,6 +5,16 @@ Todas las modificaciones importantes de este proyecto se documentan en este arch
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/),
 y este proyecto sigue [Versionado Semantico](https://semver.org/lang/es/).
 
+## [1.2.0] - 2026-02-09
+
+### Agregado
+- Modulo **Logistica**: seguimiento de pedidos y entregas con edicion inline
+- **Restricciones de proveedores por perfil**: whitelist de proveedores con seleccion de modulos donde aplica (Logistica, Remitos, Productos, Dashboard)
+- Vista dedicada en Perfiles > Restricciones con configuracion via AJAX
+- Scope `Proveedor::permitidos()` y helper `Proveedor::idsPermitidos()` para filtrado centralizado
+- Validacion de permisos en edicion de campos (LogisticaController, RtoController)
+- Registro de auditoria en cambios de restricciones
+
 ## [1.1.0] - 2025-XX-XX
 
 ### Agregado
