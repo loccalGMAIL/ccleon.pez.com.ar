@@ -14,6 +14,7 @@ use App\Http\Controllers\ProductosController;
 use App\Http\Controllers\RtoDetalleController;
 use App\Http\Controllers\Perfiles;
 use App\Http\Controllers\ConfiguracionController;
+use App\Http\Controllers\LogisticaController;
 
 // Crear usuario admin (Solo usar una vez)
 // Route::get('/crear-admin',[AuthController::class, 'crearAdmin'])->name('crear-admin');
@@ -109,6 +110,16 @@ Route::prefix('perfiles')->middleware(['auth', 'Checkrol:perfiles'])->group(func
     Route::get('/edit/{id}', [Perfiles::class, 'edit'])->name('perfiles.edit');
     Route::put('/update/{id}', [Perfiles::class, 'update'])->name('perfiles.update');
     Route::delete('/destroy/{id}', [Perfiles::class, 'destroy'])->name('perfiles.destroy');
+    Route::get('/restricciones', [Perfiles::class, 'restricciones'])->name('perfiles.restricciones');
+    Route::get('/restricciones/{perfilId}', [Perfiles::class, 'getRestriccion'])->name('perfiles.getRestriccion');
+    Route::post('/restricciones/guardar', [Perfiles::class, 'guardarRestriccion'])->name('perfiles.guardarRestriccion');
+});
+
+Route::prefix('logistica')->middleware(['auth', 'Checkrol:logistica'])->group(function () {
+    Route::get('/', [LogisticaController::class, 'index'])->name('logistica');
+    Route::post('/store', [LogisticaController::class, 'store'])->name('logistica.store');
+    Route::post('/actualizarCampo', [LogisticaController::class, 'actualizarCampo'])->name('logistica.actualizarCampo');
+    Route::delete('/delete/{id}', [LogisticaController::class, 'destroy'])->name('logistica.destroy');
 });
 
 Route::prefix('configuracion')->middleware(['auth', 'Checkrol:configuracion'])->group(function () {

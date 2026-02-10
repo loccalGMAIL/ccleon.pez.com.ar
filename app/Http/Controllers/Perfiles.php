@@ -4,6 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Perfil;
 use App\Models\PerfilModulo;
+use App\Models\PerfilProveedor;
+use App\Models\PerfilRestriccionModulo;
+use App\Models\Proveedor;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\AuditLog;
@@ -115,5 +118,77 @@ class Perfiles extends Controller
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => 'Error al eliminar el perfil']);
         }
+    }
+
+    public function restricciones()
+    {
+        $titulo = 'Restricciones de Proveedores';
+        $perfiles = Perfil::orderBy('nombre')->get();
+        $proveedores = Proveedor::where('estadoProveedor', 1)->orderBy('razonSocialProveedor')->get();
+        $modulosDisponibles = [
+            'logistica' => 'Logistica',
+            'remitos' => 'Remitos',
+            'productos' => 'Productos',
+            'dashboard' => 'Dashboard',
+        ];
+
+        return view('modules.perfiles.restricciones', compact('titulo', 'perfiles', 'proveedores', 'modulosDisponibles'));
+    }
+
+    public function getRestriccion($perfilId)
+    {
+        $perfil = Perfil::with(['proveedoresPermitidos', 'modulosRestringidos'])->findOrFail($perfilId);
+
+        return response()->json([
+            'success' => true,
+            'proveedores' => $perfil->proveedoresPermitidos->pluck('proveedores_id')->toArray(),
+            'modulos' => $perfil->modulosRestringidos->pluck('modulo')->toArray(),
+        ]);
+    }
+
+    public function guardarRestriccion(Request $request)
+    {
+        $request->validate([
+            'perfil_id' => 'required|exists:perfiles,id',
+            'proveedores' => 'nullable|array',
+            'proveedores.*' => 'exists:proveedores,id',
+            'modulos' => 'nullable|array',
+        ]);
+
+        $perfil = Perfil::findOrFail($request->perfil_id);
+        $proveedores = $request->input('proveedores', []);
+        $modulos = $request->input('modulos', []);
+
+        $antes = [
+            'proveedores' => $perfil->proveedoresPermitidos()->pluck('proveedores_id')->toArray(),
+            'modulos' => $perfil->modulosRestringidos()->pluck('modulo')->toArray(),
+        ];
+
+        // Sincronizar proveedores permitidos
+        PerfilProveedor::where('perfil_id', $perfil->id)->delete();
+        foreach ($proveedores as $provId) {
+            PerfilProveedor::create([
+                'perfil_id' => $perfil->id,
+                'proveedores_id' => $provId,
+            ]);
+        }
+
+        // Sincronizar modulos restringidos
+        PerfilRestriccionModulo::where('perfil_id', $perfil->id)->delete();
+        foreach ($modulos as $modulo) {
+            PerfilRestriccionModulo::create([
+                'perfil_id' => $perfil->id,
+                'modulo' => $modulo,
+            ]);
+        }
+
+        $despues = [
+            'proveedores' => $proveedores,
+            'modulos' => $modulos,
+        ];
+
+        AuditLog::registrar('perfiles', 'restriccion_proveedores', "Actualizo restricciones de proveedores del perfil {$perfil->nombre}", 'Perfil', $perfil->id, $antes, $despues);
+
+        return response()->json(['success' => true, 'message' => 'Restricciones guardadas correctamente']);
     }
 }

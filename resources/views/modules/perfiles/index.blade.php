@@ -28,6 +28,9 @@
                             <a href="{{ route('perfiles.create') }}" class="btn btn-sm btn-primary">
                                 <i class="fa-solid fa-circle-plus"> </i> Agregar nuevo perfil
                             </a>
+                            <a href="{{ route('perfiles.restricciones') }}" class="btn btn-sm btn-warning">
+                                <i class="fa-solid fa-lock"></i> Restricciones de Proveedores
+                            </a>
                             <!-- Table with stripped rows -->
                             <table class="table datatable">
                                 <thead>

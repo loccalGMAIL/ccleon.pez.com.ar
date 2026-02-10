@@ -66,6 +66,15 @@
       </li><!-- End Informes Nav -->
 @endcan
 
+@can('acceso-logistica')
+      <li class="nav-item">
+        <a class="nav-link collapsed" href="{{route('logistica')}}">
+          <i class="fa-solid fa-truck-fast"></i>
+          <span>Logistica</span>
+        </a>
+      </li><!-- End Logistica Nav -->
+@endcan
+
 @if(Auth::check() && (Auth::user()->tieneAcceso('usuarios') || Auth::user()->tieneAcceso('perfiles') || Auth::user()->tieneAcceso('configuracion')))
       <li class="nav-item">
         <a class="nav-link collapsed" data-bs-target="#configuracion-nav" data-bs-toggle="collapse" href="#">
