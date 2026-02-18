@@ -36,6 +36,7 @@
                                     <thead>
                                         <tr>
                                             <th class="text-center">Proveedor</th>
+                                            <th class="text-center">Rto</th>
                                             <th class="text-center">Fecha Pedido</th>
                                             <th class="text-center">ETD</th>
                                             <th class="text-center">ETA</th>
@@ -68,6 +69,10 @@
                                                             @endforeach
                                                         </ul>
                                                     </div>
+                                                </td>
+                                                <td class="editable-cell" data-id="{{ $item->id }}"
+                                                    data-field="rto" data-type="text">
+                                                    {{ $item->rto }}
                                                 </td>
                                                 <td class="editable-cell" data-id="{{ $item->id }}"
                                                     data-field="fecha_pedido" data-type="date"
