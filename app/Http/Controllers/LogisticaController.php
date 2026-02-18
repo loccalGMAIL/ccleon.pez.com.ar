@@ -29,6 +29,7 @@ class LogisticaController extends Controller
             'fecha_pedido' => 'required|date',
             'etd' => 'nullable|date',
             'eta' => 'nullable|date',
+            'rto' => 'nullable|string|max:100',
             'destino' => 'nullable|string|max:200',
             'transporte' => 'nullable|string|max:200',
             'observaciones' => 'nullable|string',
@@ -36,6 +37,7 @@ class LogisticaController extends Controller
 
         $logistica = Logistica::create([
             'proveedores_id' => $request->proveedores_id,
+            'rto' => $request->rto,
             'fecha_pedido' => $request->fecha_pedido,
             'etd' => $request->etd,
             'eta' => $request->eta,
@@ -59,6 +61,7 @@ class LogisticaController extends Controller
 
             $camposPermitidos = [
                 'proveedores_id',
+                'rto',
                 'fecha_pedido',
                 'etd',
                 'eta',

@@ -31,6 +31,10 @@
 
                     <div class="row mb-3">
                         <div class="col-md-6">
+                            <label for="rto" class="form-label">Nro. Remito</label>
+                            <input type="text" class="form-control" id="rto" name="rto" maxlength="100">
+                        </div>
+                        <div class="col-md-6">
                             <label for="etd" class="form-label">ETD (Salida)</label>
                             <input type="date" class="form-control" id="etd" name="etd">
                         </div>
@@ -51,10 +55,22 @@
                         </div>
                     </div>
 
-                    <div class="row mb-3">
-                        <div class="col-md-12">
-                            <label for="observaciones" class="form-label">Observaciones</label>
-                            <textarea class="form-control" id="observaciones" name="observaciones" rows="3"></textarea>
+                    <div class="accordion accordion-flush" id="accordionObservaciones">
+                        <div class="accordion-item border-0">
+                            <h2 class="accordion-header" id="headingObservaciones">
+                                <button class="accordion-button collapsed px-0 py-2" type="button"
+                                    data-bs-toggle="collapse" data-bs-target="#collapseObservaciones"
+                                    aria-expanded="false" aria-controls="collapseObservaciones"
+                                    style="font-size: 0.875rem; background: none; box-shadow: none;">
+                                    <i class="fa-solid fa-comment-dots me-2 text-muted"></i> Observaciones
+                                </button>
+                            </h2>
+                            <div id="collapseObservaciones" class="accordion-collapse collapse"
+                                aria-labelledby="headingObservaciones" data-bs-parent="#accordionObservaciones">
+                                <div class="accordion-body px-0 pt-1 pb-0">
+                                    <textarea class="form-control" id="observaciones" name="observaciones" rows="3"></textarea>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </form>
