@@ -23,11 +23,6 @@ class rto extends Model
         return $this->belongsTo(Proveedor::class, 'proveedores_id');
     }
 
-    public function camion()
-    {
-        return $this->belongsTo(Camion::class, 'id');
-    }
-
     public function observaciones()
     {
         return $this->hasMany(Observacion::class, 'Rto_id');

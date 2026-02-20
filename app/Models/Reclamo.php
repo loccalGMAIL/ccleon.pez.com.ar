@@ -8,7 +8,7 @@ class Reclamo extends Model
 {
     protected $table = 'reclamos_rto';
     protected $primaryKey = 'id';
-    protected $fillable = ['id', 
+    protected $fillable = [
                         'Rto_id',
                         'producto',
                         'cantidad', 
@@ -23,9 +23,5 @@ class Reclamo extends Model
     public function rto()
     {
         return $this->belongsTo(rto::class, 'Rto_id');
-    }
-    public function proveedor()
-    {
-        return $this->belongsTo(Proveedor::class, 'Rto_id');
     }
 }

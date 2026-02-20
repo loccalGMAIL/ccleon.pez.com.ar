@@ -13,7 +13,7 @@ class PerfilSeeder extends Seeder
             [
                 'nombre' => 'Administrador',
                 'descripcion' => 'Acceso total al sistema',
-                'modulos' => ['dashboard', 'remitos', 'reclamos', 'observaciones', 'proveedores', 'productos', 'informes', 'usuarios', 'perfiles'],
+                'modulos' => ['dashboard', 'remitos', 'reclamos', 'observaciones', 'proveedores', 'productos', 'informes', 'usuarios', 'perfiles', 'logistica', 'configuracion'],
             ],
             [
                 'nombre' => 'Operador',

@@ -125,12 +125,9 @@ class Perfiles extends Controller
         $titulo = 'Restricciones de Proveedores';
         $perfiles = Perfil::orderBy('nombre')->get();
         $proveedores = Proveedor::where('estadoProveedor', 1)->orderBy('razonSocialProveedor')->get();
-        $modulosDisponibles = [
-            'logistica' => 'Logistica',
-            'remitos' => 'Remitos',
-            'productos' => 'Productos',
-            'dashboard' => 'Dashboard',
-        ];
+        $modulosDisponibles = collect(config('modulos'))
+            ->map(fn($m) => $m['nombre'])
+            ->toArray();
 
         return view('modules.perfiles.restricciones', compact('titulo', 'perfiles', 'proveedores', 'modulosDisponibles'));
     }

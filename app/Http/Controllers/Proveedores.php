@@ -46,6 +46,16 @@ class Proveedores extends Controller
      */
     public function store(Request $request)
     {
+        $request->validate([
+            'nombreProveedor'     => 'required|string|max:255',
+            'razonSocialProveedor'=> 'required|string|max:255',
+            'cuitProveedor'       => 'nullable|string|max:50',
+            'dniProveedor'        => 'nullable|string|max:50',
+            'telefonoProveedor'   => 'nullable|string|max:50',
+            'mailProveedor'       => 'nullable|email|max:255',
+            'direccionProveedor'  => 'nullable|string|max:255',
+        ]);
+
         $proveedor = new Proveedor();
         $proveedor->nombreProveedor = $request->nombreProveedor;
         $proveedor->dniProveedor = $request->dniProveedor;
@@ -73,6 +83,11 @@ class Proveedores extends Controller
     }
 
     public function storeCamiones(Request $request){
+        $request->validate([
+            'patente'    => 'required|string|max:20',
+            'proveedor_id' => 'required|exists:proveedores,id',
+        ]);
+
         $camion = new Camion();
         $camion->patente = $request->patente;
         $camion->proveedores_id = $request->proveedor_id;
@@ -97,13 +112,13 @@ class Proveedores extends Controller
     public function edit(string $id)
     {
         $titulo = 'Editar Proveedor';
-        $item = Proveedor::find($id);
+        $item = Proveedor::findOrFail($id);
         return view('modules.proveedores.edit', compact('titulo', 'item'));
     }
     
     public function editCamiones(string $id){
         $titulo = 'Editar Camion';
-        $item = Camion::find($id);
+        $item = Camion::findOrFail($id);
         $proveedores = Proveedor::all();
         return view('modules.proveedores.camiones.edit', compact('titulo', 'item', 'proveedores'));
     }

@@ -58,7 +58,7 @@ Route::prefix('observaciones')->middleware(['auth', 'Checkrol:observaciones'])->
     Route::post('/store', [Observaciones::class, 'store'])->name('observaciones.store');
     Route::get('/show/{remito}', [Observaciones::class, 'show'])->name('observaciones.show');
     Route::put('/update/{id}', [Observaciones::class, 'update'])->name('observaciones.update');
-    Route::post('/destroy/{id}', [Observaciones::class, 'destroy'])->name('observaciones.destroy');
+    Route::delete('/destroy/{id}', [Observaciones::class, 'destroy'])->name('observaciones.destroy');
 });
 
 Route::prefix('usuarios')->middleware(['auth', 'Checkrol:usuarios'])->group(function () {
@@ -99,8 +99,8 @@ Route::prefix('productos')->middleware(['auth', 'Checkrol:productos'])->group(fu
     Route::post('/cotizacion/actualizar-externa', [ProductosController::class, 'actualizarCotizacionExterna'])->name('cotizacion.actualizar-externa');
     Route::post('/productos', [ProductosController::class, 'store'])->name('productos.store');
     Route::get('/{id}/edit', [ProductosController::class, 'edit'])->name('productos.edit');
-    Route::put('/update{id}', [ProductosController::class, 'update'])->name('productos.update');
-    Route::delete('/delete{id}', [ProductosController::class, 'destroy'])->name('productos.destroy');
+    Route::put('/update/{id}', [ProductosController::class, 'update'])->name('productos.update');
+    Route::delete('/delete/{id}', [ProductosController::class, 'destroy'])->name('productos.destroy');
 });
 
 Route::prefix('perfiles')->middleware(['auth', 'Checkrol:perfiles'])->group(function () {

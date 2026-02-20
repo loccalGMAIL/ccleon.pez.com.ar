@@ -8,16 +8,12 @@ class Observacion extends Model
 {
     protected $table = 'observaciones_rto';
     protected $primaryKey = 'id';
-    protected $fillable = ['id', 'Rto_id','descripcionObservacionesRto', 'created_at', 'updated_at'];
+    protected $fillable = ['Rto_id','descripcionObservacionesRto', 'created_at', 'updated_at'];
     protected $hidden = ['created_at', 'updated_at'];
     public $timestamps = true;
 
     public function rto()
     {
         return $this->belongsTo(rto::class, 'Rto_id');
-    }
-    public function proveedor()
-    {
-        return $this->belongsTo(Proveedor::class, 'Rto_id');
     }
 }

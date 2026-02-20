@@ -20,7 +20,6 @@ class Proveedor extends Model
         'estadoProveedor'
     ];
     public $timestamps = true;
-    protected $softDelete = true;
     
     public function camiones()
     {

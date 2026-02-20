@@ -78,7 +78,7 @@
                   <div class="col-lg-6 col-md-6 mb-3">
                     <label for="password" class="form-label small text-muted">Password</label>
                     <div class="input-group input-group-sm">
-                      <input type="password" class="form-control form-control-sm" name="password" id="password" required value="{{$item->password}}">
+                      <input type="password" class="form-control form-control-sm" name="password" id="password" placeholder="Dejar en blanco para no cambiar">
                       <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('password', this)">
                         <i class="bi bi-eye"></i>
                       </button>

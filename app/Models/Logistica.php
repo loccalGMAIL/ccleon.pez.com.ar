@@ -21,6 +21,7 @@ class Logistica extends Model
         'transporte',
         'arribo_confirmado',
         'estado',
+        'pago',
         'observaciones',
     ];
 

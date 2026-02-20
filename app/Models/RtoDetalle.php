@@ -20,7 +20,6 @@ class RtoDetalle extends Model
         'subTotalRtoReal',
     ];
 
-    protected $softDelete = true;
     
     public function rto()
     {
