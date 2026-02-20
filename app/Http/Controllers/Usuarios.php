@@ -37,12 +37,19 @@ class Usuarios extends Controller
      */
     public function store(Request $request)
     {
+        $request->validate([
+            'name'      => 'required|string|max:255',
+            'email'     => 'required|email|unique:users,email',
+            'password'  => 'required|string|min:6',
+            'perfil_id' => 'required|exists:perfiles,id',
+        ]);
+
         $data = [
-            'name' => request('name'),
-            'email' => request('email'),
-            'password' => Hash::make(request('password')),
-            'activo' => true,
-            'perfil_id' => request('perfil_id')
+            'name'      => $request->name,
+            'email'     => $request->email,
+            'password'  => Hash::make($request->password),
+            'activo'    => true,
+            'perfil_id' => $request->perfil_id,
         ];
 
         if ($request->hasFile('foto')) {
@@ -71,7 +78,7 @@ class Usuarios extends Controller
     public function edit(string $id)
     {
         $titulo = 'Editar Usuario';
-        $item = User::find($id);
+        $item = User::findOrFail($id);
         $perfiles = Perfil::all();
         return view('modules.usuarios.edit', compact('titulo', 'item', 'perfiles'));
     }
@@ -84,10 +91,13 @@ class Usuarios extends Controller
         $item = User::find($id);
         $datosAnteriores = $item->toArray();
 
-        $item->name = request('name');
-        $item->email = request('email');
-        $item->password = Hash::make(request('password'));
-        $item->perfil_id = request('perfil_id');
+        $item->name     = $request->name;
+        $item->email    = $request->email;
+        $item->perfil_id = $request->perfil_id;
+
+        if ($request->filled('password')) {
+            $item->password = Hash::make($request->password);
+        }
 
         if ($request->hasFile('foto')) {
             if ($item->foto) {

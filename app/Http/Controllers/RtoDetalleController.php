@@ -125,7 +125,8 @@ class RtoDetalleController extends Controller
     
             // Si no es el total final, continuar con la lógica existente para otros campos
             $detalle = RtoDetalle::findOrFail($id);
-    
+            $valorAnterior = $detalle->$field;
+
             // Actualizar el campo
             $detalle->$field = $value ?? 0;
     
@@ -178,7 +179,7 @@ class RtoDetalleController extends Controller
             $rto->totalFinalRto = $totalFinal;
             $rto->save();
     
-            AuditLog::registrar('remitos', 'editar', "Actualizo campo {$field} en detalle #{$id} del remito", 'RtoDetalle', (int) $id, ['campo' => $field, 'valor_anterior' => $request->input('value')], ['campo' => $field, 'valor_nuevo' => $detalle->$field]);
+            AuditLog::registrar('remitos', 'editar', "Actualizo campo {$field} en detalle #{$id} del remito", 'RtoDetalle', (int) $id, ['campo' => $field, 'valor_anterior' => $valorAnterior], ['campo' => $field, 'valor_nuevo' => $detalle->$field]);
 
             return response()->json([
                 'success' => true,

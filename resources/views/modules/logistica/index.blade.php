@@ -44,6 +44,7 @@
                                             <th class="text-center">Transporte</th>
                                             <th class="text-center">Arribo Confirmado</th>
                                             <th class="text-center">Estado</th>
+                                            <th class="text-center">Pago</th>
                                             <th class="text-center">Observaciones</th>
                                             <th class="text-center">Acciones</th>
                                         </tr>
@@ -126,6 +127,23 @@
                                                             <li><a class="dropdown-item cambiar-estado" href="#" data-id="{{ $item->id }}" data-estado="Arribado">Arribado</a></li>
                                                             <li><a class="dropdown-item cambiar-estado" href="#" data-id="{{ $item->id }}" data-estado="Demorado">Demorado</a></li>
                                                             <li><a class="dropdown-item cambiar-estado" href="#" data-id="{{ $item->id }}" data-estado="Cerrado">Cerrado</a></li>
+                                                        </ul>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    @php
+                                                        $pagoBadgeClass = $item->pago === 'Pagado' ? 'bg-success' : 'bg-danger';
+                                                    @endphp
+                                                    <div class="dropdown">
+                                                        <span id="badge-pago-{{ $item->id }}"
+                                                            class="badge pago-badge {{ $pagoBadgeClass }}"
+                                                            data-bs-toggle="dropdown" aria-expanded="false"
+                                                            style="cursor: pointer;">
+                                                            {{ $item->pago }}
+                                                        </span>
+                                                        <ul class="dropdown-menu" aria-labelledby="badge-pago-{{ $item->id }}">
+                                                            <li><a class="dropdown-item cambiar-pago" href="#" data-id="{{ $item->id }}" data-pago="Deuda">Deuda</a></li>
+                                                            <li><a class="dropdown-item cambiar-pago" href="#" data-id="{{ $item->id }}" data-pago="Pagado">Pagado</a></li>
                                                         </ul>
                                                     </div>
                                                 </td>
@@ -520,6 +538,60 @@
                         badgeElement.classList.remove('bg-warning', 'bg-info', 'bg-success', 'bg-danger', 'bg-secondary', 'opacity-75');
                         if (claseOriginal) badgeElement.classList.add(claseOriginal);
                         Swal.fire('Error', 'No se pudo actualizar el estado', 'error');
+                    });
+                });
+            });
+
+            // --- Cambiar pago (dropdown badge) ---
+            document.querySelectorAll('.cambiar-pago').forEach(function(link) {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+
+                    const id = this.dataset.id;
+                    const nuevoPago = this.dataset.pago;
+                    const badgeElement = document.getElementById('badge-pago-' + id);
+
+                    const pagoOriginal = badgeElement.textContent.trim();
+                    const claseOriginal = Array.from(badgeElement.classList).find(function(c) { return c.startsWith('bg-'); });
+
+                    badgeElement.textContent = nuevoPago;
+                    badgeElement.classList.remove('bg-danger', 'bg-success');
+                    badgeElement.classList.add(nuevoPago === 'Pagado' ? 'bg-success' : 'bg-danger');
+                    badgeElement.classList.add('opacity-75');
+
+                    const formData = new FormData();
+                    formData.append('id', id);
+                    formData.append('field', 'pago');
+                    formData.append('value', nuevoPago);
+                    formData.append('_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
+
+                    fetch('{{ route("logistica.actualizarCampo") }}', {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json'
+                        }
+                    })
+                    .then(function(response) {
+                        if (!response.ok) throw new Error('Error HTTP: ' + response.status);
+                        return response.json();
+                    })
+                    .then(function(data) {
+                        badgeElement.classList.remove('opacity-75');
+                        if (!data.success) {
+                            badgeElement.textContent = pagoOriginal;
+                            badgeElement.classList.remove('bg-danger', 'bg-success');
+                            if (claseOriginal) badgeElement.classList.add(claseOriginal);
+                            Swal.fire('Error', data.message || 'No se pudo actualizar el pago', 'error');
+                        }
+                    })
+                    .catch(function(error) {
+                        console.error('Error:', error);
+                        badgeElement.textContent = pagoOriginal;
+                        badgeElement.classList.remove('bg-danger', 'bg-success', 'opacity-75');
+                        if (claseOriginal) badgeElement.classList.add(claseOriginal);
+                        Swal.fire('Error', 'No se pudo actualizar el pago', 'error');
                     });
                 });
             });

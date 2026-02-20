@@ -15,19 +15,16 @@ class Reclamos extends Controller
     public function index($rtoId = null)
     {
         $titulo = 'Reclamos';
-        $items = Reclamo::all();
-        // return view('modules.rto.reclamos.index', compact('titulo', 'items'));
 
-            $query = Reclamo::with('rto');
-            
-            if ($rtoId) {
-                $query->where('Rto_id', $rtoId);
-            }
-            
-            $reclamos = $query->get();
-            
-            return view('modules.rto.reclamos.index', compact('titulo','reclamos', 'rtoId', 'items'));
-        
+        $query = Reclamo::with('rto');
+
+        if ($rtoId) {
+            $query->where('Rto_id', $rtoId);
+        }
+
+        $reclamos = $query->get();
+
+        return view('modules.rto.reclamos.index', compact('titulo', 'reclamos', 'rtoId'));
     }
 
     /**
@@ -113,7 +110,7 @@ class Reclamos extends Controller
 
        $reclamo = Reclamo::findOrFail($id);
        $datosAnteriores = $reclamo->toArray();
-       $reclamo->update($request->all());
+       $reclamo->update($request->only(['producto', 'cantidad', 'observaciones', 'estadoReclamoRto', 'resolucionReclamoRto']));
 
        AuditLog::registrar('reclamos', 'editar', "Edito reclamo #{$id}", 'Reclamo', (int) $id, $datosAnteriores, $reclamo->fresh()->toArray());
 

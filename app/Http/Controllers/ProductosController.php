@@ -5,7 +5,7 @@ use App\Models\AuditLog;
 use App\Models\Proveedor;
 use App\Models\Cotizacion;
 use App\Models\Producto;
-use illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 
 use Illuminate\Http\Request;
@@ -183,27 +183,6 @@ class ProductosController extends Controller
         }
     }
 
-    // public function guardarCotizacion(Request $request)
-    // {
-    //     // Validar el valor recibido
-    //     $request->validate([
-    //         'cotizacion' => 'required|numeric|min:0',
-    //     ]);
-
-    //     // Buscar la cotización existente o crear una nueva
-    //     $cotizacion = Cotizacion::first();
-    //     if (!$cotizacion) {
-    //         $cotizacion = new Cotizacion();
-    //     }
-
-    //     $cotizacion->precioDolar = $request->cotizacion;
-    //     $cotizacion->save();
-
-    //     // Configurar SweetAlert para la confirmación
-    //     return redirect()->back()->with('swal_success', 'Cotización del dólar actualizada correctamente');
-    // }
-
-
     public function guardarCotizacion(Request $request)
     {
         // Validar el valor recibido
@@ -260,6 +239,8 @@ class ProductosController extends Controller
             // Obtener la cotización real del Banco Nación Argentina
             $nuevaCotizacion = $this->obtenerCotizacionBancoNacion();
 
+            DB::beginTransaction();
+
             // Buscar la cotización existente o crear una nueva
             $cotizacion = Cotizacion::first();
             if (!$cotizacion) {
@@ -270,10 +251,21 @@ class ProductosController extends Controller
             $cotizacion->precioDolar = $nuevaCotizacion;
             $cotizacion->save();
 
+            // Recalcular precios de todos los productos
+            $productos = Producto::all();
+            foreach ($productos as $producto) {
+                $producto->TC = $nuevaCotizacion;
+                $producto->costo = $producto->costoDlrs * $nuevaCotizacion;
+                $producto->save();
+            }
+
+            DB::commit();
+
             AuditLog::registrar('productos', 'actualizar_cotizacion', "Actualizo cotizacion externa a {$nuevaCotizacion} (Banco Nacion)", 'Cotizacion', $cotizacion->id, null, ['precioDolar' => $nuevaCotizacion]);
 
-            return redirect()->back()->with('swal_success', "Cotización actualizada a $nuevaCotizacion (Banco Nación)");
+            return redirect()->back()->with('swal_success', "Cotización actualizada a $nuevaCotizacion (Banco Nación) y precios recalculados");
         } catch (\Exception $e) {
+            DB::rollback();
             Log::error('Error al actualizar cotización externa: ' . $e->getMessage());
             return redirect()->back()->with('swal_error', 'Error al actualizar la cotización: ' . $e->getMessage());
         }

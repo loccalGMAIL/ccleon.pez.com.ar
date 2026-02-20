@@ -9,7 +9,6 @@ class Producto extends Model
     protected $table = 'productos';
     protected $primaryKey = 'id';
     protected $fillable = [
-        'id',
         'proveedores_id',
         'codigo',
         'codigoBarras',
@@ -21,7 +20,6 @@ class Producto extends Model
     ];
     protected $hidden = ['created_at', 'updated_at'];
     public $timestamps = true;
-    public $sofoftDelete = true;
 
     public function proveedor()
     {

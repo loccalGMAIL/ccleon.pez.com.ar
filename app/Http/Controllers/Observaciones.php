@@ -57,9 +57,7 @@ class Observaciones extends Controller
     public function show(string $id)
     {
         $remito = rto::with('proveedor')->findOrFail($id);
-        $items = Observacion::with('proveedor')
-            ->where('Rto_id', $id)
-            ->get();
+        $items = Observacion::where('Rto_id', $id)->get();
 
         return view('modules.rto.observaciones.index', [
             'items' => $items,
@@ -113,15 +111,15 @@ class Observaciones extends Controller
     public function destroy($id)
     {
         try {
-            $reclamo = Observacion::findOrFail($id);
-            $datosAnteriores = $reclamo->toArray();
-            $reclamo->delete();
+            $observacion = Observacion::findOrFail($id);
+            $datosAnteriores = $observacion->toArray();
+            $observacion->delete();
 
             AuditLog::registrar('observaciones', 'eliminar', "Elimino observacion #{$id}", 'Observacion', (int) $id, $datosAnteriores);
 
-            return response()->json(['success' => true, 'message' => 'Reclamo eliminado correctamente']);
+            return response()->json(['success' => true, 'message' => 'Observacion eliminada correctamente']);
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'Error al eliminar el reclamo: ' . $e->getMessage()]);
+            return response()->json(['success' => false, 'message' => 'Error al eliminar la observacion: ' . $e->getMessage()]);
         }
     }
 }

@@ -48,7 +48,7 @@ class RtoController extends Controller
         $remito->nroFacturaRto = $request->input('nroFacturaRto');
         $remito->save();
 
-        AuditLog::registrar('remitos', 'editar', "Actualizo remito #{$remito->camion}", 'Rto', $remito->id, $datosAnteriores, $remito->fresh()->toArray());
+        AuditLog::registrar('remitos', 'editar', "Actualizo remito #{$remito->id} ({$remito->nroFacturaRto})", 'Rto', $remito->id, $datosAnteriores, $remito->fresh()->toArray());
 
         return response()->json(['success' => true, 'message' => 'Remito actualizado correctamente']);
     } catch (\Exception $e) {
@@ -145,6 +145,7 @@ class RtoController extends Controller
         ]);
 
         $remito = Rto::findOrFail($id);
+        $datosAnteriores = $remito->toArray();
 
         // Actualizar datos básicos del remito
         $remito->fechaIngresoRto = $request->fechaIngresoRto;
@@ -175,7 +176,7 @@ class RtoController extends Controller
 
         $remito->save();
 
-        AuditLog::registrar('remitos', 'editar', "Edito remito #{$remito->camion}", 'Rto', $remito->id, null, $remito->fresh()->toArray());
+        AuditLog::registrar('remitos', 'editar', "Edito remito #{$remito->id} ({$remito->nroFacturaRto})", 'Rto', $remito->id, $datosAnteriores, $remito->fresh()->toArray());
 
         return redirect()->route('remitos.edit', $id)
             ->with('success', 'Remito actualizado correctamente');

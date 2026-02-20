@@ -10,7 +10,6 @@ class Camion extends Model
     protected $primaryKey = 'id';
     protected $fillable = ['contador', 'proveedores_id'];
     public $timestamps = true;
-    protected $softDelete = true;
 
     // En tu modelo Camion.php
 public function proveedor()

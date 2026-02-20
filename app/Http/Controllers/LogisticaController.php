@@ -69,6 +69,7 @@ class LogisticaController extends Controller
                 'transporte',
                 'arribo_confirmado',
                 'estado',
+                'pago',
                 'observaciones',
             ];
 
@@ -101,6 +102,14 @@ class LogisticaController extends Controller
                 $estadosPermitidos = ['Pendiente', 'En transito', 'Arribado', 'Demorado', 'Cerrado'];
                 if (!in_array($value, $estadosPermitidos)) {
                     return response()->json(['success' => false, 'message' => 'Estado no valido']);
+                }
+            }
+
+            // Para pago, validar que sea un valor permitido
+            if ($field === 'pago') {
+                $pagosPermitidos = ['Deuda', 'Pagado'];
+                if (!in_array($value, $pagosPermitidos)) {
+                    return response()->json(['success' => false, 'message' => 'Valor de pago no valido']);
                 }
             }
 
