@@ -11,6 +11,11 @@ return [
         'descripcion' => 'Gestion de remitos y documentacion',
         'icono' => 'fa-solid fa-file-signature',
     ],
+    'remitos_eliminar' => [
+        'nombre' => 'Remitos - Eliminar',
+        'descripcion' => 'Permite eliminar remitos en estado Espera',
+        'icono' => 'fa-solid fa-trash',
+    ],
     'reclamos' => [
         'nombre' => 'Reclamos',
         'descripcion' => 'Gestion de reclamos de remitos',

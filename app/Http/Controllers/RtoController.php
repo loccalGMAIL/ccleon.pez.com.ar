@@ -1,6 +1,7 @@
 <?php
 namespace App\Http\Controllers;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use App\Models\Proveedor;
 use App\Models\rto;
 use App\Models\Camion;
@@ -210,6 +211,47 @@ class RtoController extends Controller
         ->get();
 
         return view('modules.rto.pendientes', compact('items', 'titulo', 'proveedores', 'anios', 'anioSeleccionado'));
+    }
+
+    public function destroy($id)
+    {
+        if (Gate::denies('acceso-remitos_eliminar')) {
+            return response()->json(['success' => false, 'message' => 'No tiene permiso para eliminar remitos.'], 403);
+        }
+
+        try {
+            $remito = rto::findOrFail($id);
+
+            if ($remito->estado !== 'Espera') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Solo se pueden eliminar remitos en estado Espera.',
+                ], 422);
+            }
+
+            $datosAnteriores = $remito->toArray();
+
+            $camion = Camion::where('proveedores_id', $remito->proveedores_id)->first();
+            if ($camion && $camion->contador > 1) {
+                $camion->contador -= 1;
+                $camion->save();
+            }
+
+            $remito->delete();
+
+            AuditLog::registrar(
+                'remitos', 'eliminar',
+                "Elimino remito #{$remito->camion} del proveedor {$remito->proveedores_id}",
+                'Rto', (int) $id, $datosAnteriores
+            );
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Remito eliminado correctamente.',
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
     }
 
     public function actualizarEstado(Request $request, $id)

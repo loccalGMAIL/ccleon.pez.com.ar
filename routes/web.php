@@ -41,6 +41,7 @@ Route::prefix('remitos')->middleware(['auth', 'Checkrol:remitos'])->group(functi
     Route::get('obtenerValor/{id}/{field}', [RtoDetalleController::class, 'obtenerValor'])->name('obtenerValor');
     Route::post('/deleteRtoDetalle/{id}', [RtoDetalleController::class, 'delete'])->name('deleteRtoDetalle');
     Route::get('pendientes', [RtoController::class, 'pendientes'])->name('remitos.pendientes');
+    Route::delete('/delete/{id}', [RtoController::class, 'destroy'])->name('remitos.destroy');
     Route::post('/actualizarEstado/{id}', [RtoController::class, 'actualizarEstado'])->name('actualizarEstado');
     Route::post('/remitos/actualizar/{id}', [RtoController::class, 'actualizar'])->name('actualizarRemito');
 });
