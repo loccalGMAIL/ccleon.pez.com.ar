@@ -5,6 +5,15 @@ Todas las modificaciones importantes de este proyecto se documentan en este arch
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/),
 y este proyecto sigue [Versionado Semantico](https://semver.org/lang/es/).
 
+## [1.2.3] - 2026-02-23
+
+### Agregado
+- **Remitos**: botón eliminar remitos en estado Espera con soft delete
+- Nuevo módulo de permiso `remitos_eliminar` para control de acceso por perfil
+- Al eliminar un remito se decrementa el contador del proveedor (mínimo 1)
+- Confirmación SweetAlert2 con advertencia sobre impacto en la secuencia de numeración
+- Registro de auditoría en eliminación de remitos
+
 ## [1.2.0] - 2026-02-09
 
 ### Agregado

@@ -87,6 +87,13 @@
         <a href="{{ route('reclamos.show', $item->id) }}" class="badge bg-danger" title="Ver Reclamos">
           <i class="fa-solid fa-triangle-exclamation"></i>
         </a>
+        @can('acceso-remitos_eliminar')
+        @if ($item->estado === 'Espera')
+        <a href="#" class="badge bg-danger eliminar-registro" data-id="{{ $item->id }}" title="Eliminar remito">
+          <i class="fa-solid fa-trash"></i>
+        </a>
+        @endif
+        @endcan
         </td>
 
         </tr>
@@ -190,6 +197,47 @@
         });
       });
     });
+    });
+
+    // Eliminar remito
+    document.querySelectorAll('.eliminar-registro').forEach(btn => {
+      btn.addEventListener('click', function (e) {
+        e.preventDefault();
+        const id = this.dataset.id;
+        Swal.fire({
+          title: '¿Eliminar remito?',
+          html: '<p>Esta acción <strong>no se puede deshacer</strong>.</p>' +
+                '<p class="mt-2 text-danger"><i class="fa-solid fa-triangle-exclamation"></i> <strong>Atención:</strong> Al eliminar este remito el contador del proveedor se decrementará, lo que puede generar <strong>huecos en la numeración</strong> de los camiones en tránsito.</p>' +
+                '<p class="mt-2">Proceda solo si está seguro de que este remito no afecta la secuencia activa de envíos.</p>',
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonColor: '#d33',
+          cancelButtonColor: '#6c757d',
+          confirmButtonText: 'Entiendo, eliminar',
+          cancelButtonText: 'Cancelar'
+        }).then(result => {
+          if (!result.isConfirmed) return;
+          fetch(`/remitos/delete/${id}`, {
+            method: 'DELETE',
+            headers: {
+              'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+              'X-Requested-With': 'XMLHttpRequest'
+            }
+          })
+          .then(r => r.json())
+          .then(data => {
+            if (data.success) {
+              Swal.fire({ icon: 'success', title: 'Eliminado', text: data.message, timer: 1500, showConfirmButton: false });
+              const table = $('table.datatable').DataTable();
+              const row = btn.closest('tr');
+              table.row(row).remove().draw();
+            } else {
+              Swal.fire({ icon: 'error', title: 'Error', text: data.message });
+            }
+          })
+          .catch(() => Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo eliminar el remito.' }));
+        });
+      });
     });
   </script>
 
