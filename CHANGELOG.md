@@ -5,6 +5,11 @@ Todas las modificaciones importantes de este proyecto se documentan en este arch
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/),
 y este proyecto sigue [Versionado Semantico](https://semver.org/lang/es/).
 
+## [1.2.4] - 2026-03-25
+
+### Corregido
+- **Productos**: URL del formulario de edición y eliminación corregida en JS (faltaba `/` antes del `id`), lo que generaba un 404 al intentar actualizar o eliminar un producto
+
 ## [1.2.3] - 2026-02-23
 
 ### Agregado

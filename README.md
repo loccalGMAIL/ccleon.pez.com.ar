@@ -47,6 +47,12 @@ php artisan test    # Tests
 
 ## Changelog
 
+### v1.2.4
+- **Productos:** URL de edición y eliminación corregida en JS (faltaba `/` antes del `id`), generaba 404 al actualizar o eliminar
+
+### v1.2.3
+- **Remitos:** botón eliminar con soft delete y permisos por perfil (`remitos_eliminar`)
+
 ### v1.2.2
 - **Logística:** nueva columna "Pago" (badge Deuda/Pagado) independiente del estado logístico
 - **Correcciones generales:**
