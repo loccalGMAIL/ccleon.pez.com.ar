@@ -393,7 +393,7 @@
                 dataType: 'json',
                 success: function(data) {
                     // Establecer la acción del formulario
-                    $('#editarProductoForm').attr('action', `/productos/update${id}`);
+                    $('#editarProductoForm').attr('action', `/productos/update/${id}`);
 
                     // Llenar el formulario con los datos del producto
                     $('#edit_codigo').val(data.codigo);
@@ -469,7 +469,7 @@
                     // Crear un formulario para enviar la solicitud DELETE
                     let form = document.createElement('form');
                     form.method = 'POST';
-                    form.action = `/productos/delete${id}`;
+                    form.action = `/productos/delete/${id}`;
 
                     let csrfField = document.createElement('input');
                     csrfField.type = 'hidden';
