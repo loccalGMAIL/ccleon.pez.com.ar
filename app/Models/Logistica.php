@@ -14,6 +14,7 @@ class Logistica extends Model
     protected $fillable = [
         'proveedores_id',
         'rto',
+        'nro_factura',
         'fecha_pedido',
         'etd',
         'eta',

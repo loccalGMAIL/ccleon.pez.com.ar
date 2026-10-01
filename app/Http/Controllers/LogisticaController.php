@@ -30,6 +30,7 @@ class LogisticaController extends Controller
             'etd' => 'nullable|date',
             'eta' => 'nullable|date',
             'rto' => 'nullable|string|max:100',
+            'nro_factura' => 'nullable|digits_between:1,5',
             'destino' => 'nullable|string|max:200',
             'transporte' => 'nullable|string|max:200',
             'observaciones' => 'nullable|string',
@@ -38,6 +39,7 @@ class LogisticaController extends Controller
         $logistica = Logistica::create([
             'proveedores_id' => $request->proveedores_id,
             'rto' => $request->rto,
+            'nro_factura' => $this->normalizarNroFactura($request->nro_factura),
             'fecha_pedido' => $request->fecha_pedido,
             'etd' => $request->etd,
             'eta' => $request->eta,
@@ -62,6 +64,7 @@ class LogisticaController extends Controller
             $camposPermitidos = [
                 'proveedores_id',
                 'rto',
+                'nro_factura',
                 'fecha_pedido',
                 'etd',
                 'eta',
@@ -95,6 +98,15 @@ class LogisticaController extends Controller
                 if ($idsPermitidos !== null && !in_array((int)$value, $idsPermitidos)) {
                     return response()->json(['success' => false, 'message' => 'No tiene permiso para este proveedor']);
                 }
+            }
+
+            // Para nro_factura, solo hasta 5 digitos; se completa con ceros a la izquierda
+            if ($field === 'nro_factura') {
+                $value = trim((string) $value);
+                if ($value !== '' && !preg_match('/^\d{1,5}$/', $value)) {
+                    return response()->json(['success' => false, 'message' => 'El Nro. de factura debe tener hasta 5 digitos numericos']);
+                }
+                $value = $this->normalizarNroFactura($value);
             }
 
             // Para estado, validar que sea un valor permitido
@@ -156,5 +168,12 @@ class LogisticaController extends Controller
                 'message' => $e->getMessage(),
             ], 500);
         }
+    }
+
+    private function normalizarNroFactura(?string $valor): ?string
+    {
+        $valor = trim((string) $valor);
+
+        return $valor === '' ? null : str_pad($valor, 5, '0', STR_PAD_LEFT);
     }
 }

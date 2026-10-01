@@ -143,6 +143,67 @@
     });
   </script>
 
+  <!-- Tooltip automatico en celdas de tablas cuando su contenido esta oculto o recortado -->
+  <style>
+    .tooltip-celda .tooltip-inner {
+      max-width: 360px;
+      text-align: left;
+      white-space: pre-line;
+    }
+  </style>
+  <script>
+    (function () {
+      let celdaActual = null;
+
+      // Texto completo de la celda: data-tooltip si el servidor lo recorto, o su propio texto
+      function textoCompleto(celda) {
+        return (celda.dataset.tooltip !== undefined ? celda.dataset.tooltip : celda.innerText).trim();
+      }
+
+      function contenidoOculto(celda) {
+        if (celda.dataset.tooltip !== undefined) {
+          return celda.dataset.tooltip.trim() !== celda.innerText.trim();
+        }
+        return celda.scrollWidth > celda.clientWidth + 1 || celda.scrollHeight > celda.clientHeight + 1;
+      }
+
+      function ocultar() {
+        if (!celdaActual) return;
+        const instancia = bootstrap.Tooltip.getInstance(celdaActual);
+        if (instancia) instancia.dispose();
+        celdaActual = null;
+      }
+
+      document.addEventListener('mouseover', function (e) {
+        const celda = e.target.closest('table td, table th');
+        if (!celda || celda === celdaActual) return;
+
+        ocultar();
+
+        if (celda.classList.contains('editing') || celda.querySelector('.dropdown, input, select, textarea')) return;
+
+        const texto = textoCompleto(celda);
+        if (!texto || !contenidoOculto(celda)) return;
+
+        celdaActual = celda;
+        new bootstrap.Tooltip(celda, {
+          title: texto,
+          trigger: 'manual',
+          container: 'body',
+          placement: 'top',
+          customClass: 'tooltip-celda'
+        }).show();
+      });
+
+      document.addEventListener('mouseout', function (e) {
+        if (celdaActual && !celdaActual.contains(e.relatedTarget)) ocultar();
+      });
+
+      document.addEventListener('click', ocultar);
+      document.addEventListener('scroll', ocultar, true);
+    })();
+  </script>
+
   <!-- Mantiene viva la sesion y maneja el error 419 (sesion expirada) -->
   <script>
     (function () {

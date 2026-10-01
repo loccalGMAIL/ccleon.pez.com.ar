@@ -7,7 +7,13 @@ y este proyecto sigue [Versionado Semantico](https://semver.org/lang/es/).
 
 ## [1.2.5] - 2026-10-01
 
+### Agregado
+- **Logística**: nueva columna **Nro. Factura** (hasta 5 dígitos numéricos, se completa con ceros a la izquierda), editable en línea y cargable desde el alta de registros
+
 ### Corregido
+- **Logística**: la tabla pasa a jQuery DataTables con eventos delegados, por lo que la edición en línea y los cambios de estado, pago y proveedor siguen funcionando al paginar, ordenar o buscar; el orden por fecha ya no es alfabético
+- **Logística**: columnas de ancho fijo y edición sin cambiar el tamaño de la fila, para que la tabla no se deforme
+- **Logística**: al editar Observaciones ya no se guarda el texto recortado con "..."; se edita y guarda el texto completo
 - **Sesión (error 419)**: el error de CSRF ahora se maneja sin pantalla de error: las peticiones web redirigen al login con un aviso y las AJAX/fetch muestran un SweetAlert y llevan al login
 - **Sesión**: se mantiene viva con una ruta `keep-alive` cada 10 minutos que además renueva el token CSRF; el login se recarga cada hora para no quedar con un token vencido
 - **Remitos**: la numeración de camión ahora es atómica (transacción con bloqueo) y al eliminar un remito solo se decrementa el contador si era el último, evitando números repetidos
