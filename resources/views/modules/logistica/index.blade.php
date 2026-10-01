@@ -34,34 +34,34 @@
                             <div class="table-responsive">
                                 <table id="tablaLogistica" class="table">
                                     <colgroup>
-                                        <col style="width: 10%">
+                                        <col style="width: 12%">
                                         <col style="width: 5%">
                                         <col style="width: 6%">
+                                        <col style="width: 7.5%">
+                                        <col style="width: 7.5%">
+                                        <col style="width: 7.5%">
                                         <col style="width: 9%">
                                         <col style="width: 9%">
-                                        <col style="width: 9%">
-                                        <col style="width: 8%">
-                                        <col style="width: 9%">
-                                        <col style="width: 9%">
+                                        <col style="width: 7.5%">
+                                        <col style="width: 8.5%">
                                         <col style="width: 7%">
-                                        <col style="width: 6%">
-                                        <col style="width: 9%">
+                                        <col style="width: 9.5%">
                                         <col style="width: 4%">
                                     </colgroup>
                                     <thead>
                                         <tr>
                                             <th class="text-center">Proveedor</th>
-                                            <th class="text-center">Rto</th>
-                                            <th class="text-center">N° Fac.</th>
-                                            <th class="text-center">Fecha Pedido</th>
-                                            <th class="text-center">ETD</th>
-                                            <th class="text-center">ETA</th>
+                                            <th class="text-center" data-tooltip="Nro. de remito">Rto</th>
+                                            <th class="text-center" data-tooltip="Nro. de factura">N° Fac.</th>
+                                            <th class="text-center" data-tooltip="Fecha de pedido">F. Pedido</th>
+                                            <th class="text-center" data-tooltip="ETD: salida estimada">ETD</th>
+                                            <th class="text-center" data-tooltip="ETA: arribo estimado">ETA</th>
                                             <th class="text-center">Destino</th>
-                                            <th class="text-center">Transporte</th>
-                                            <th class="text-center">Arribo Confirmado</th>
+                                            <th class="text-center" data-tooltip="Transporte">Transp.</th>
+                                            <th class="text-center" data-tooltip="Arribo confirmado">Arribo</th>
                                             <th class="text-center">Estado</th>
                                             <th class="text-center">Pago</th>
-                                            <th class="text-center">Observaciones</th>
+                                            <th class="text-center" data-tooltip="Observaciones">Observ.</th>
                                             <th class="text-center"><span class="visually-hidden">Acciones</span></th>
                                         </tr>
                                     </thead>
@@ -99,19 +99,19 @@
                                                     data-field="fecha_pedido" data-type="date"
                                                     data-raw-value="{{ $item->fecha_pedido?->format('Y-m-d') }}"
                                                     data-order="{{ $item->fecha_pedido?->format('Y-m-d') }}">
-                                                    {{ $item->fecha_pedido?->format('d/m/Y') }}
+                                                    {{ $item->fecha_pedido?->format('d/m/y') }}
                                                 </td>
                                                 <td class="editable-cell" data-id="{{ $item->id }}" data-field="etd"
                                                     data-type="date"
                                                     data-raw-value="{{ $item->etd?->format('Y-m-d') }}"
                                                     data-order="{{ $item->etd?->format('Y-m-d') }}">
-                                                    {{ $item->etd?->format('d/m/Y') }}
+                                                    {{ $item->etd?->format('d/m/y') }}
                                                 </td>
                                                 <td class="editable-cell" data-id="{{ $item->id }}" data-field="eta"
                                                     data-type="date"
                                                     data-raw-value="{{ $item->eta?->format('Y-m-d') }}"
                                                     data-order="{{ $item->eta?->format('Y-m-d') }}">
-                                                    {{ $item->eta?->format('d/m/Y') }}
+                                                    {{ $item->eta?->format('d/m/y') }}
                                                 </td>
                                                 <td class="editable-cell" data-id="{{ $item->id }}"
                                                     data-field="destino" data-type="text">
@@ -125,7 +125,7 @@
                                                     data-field="arribo_confirmado" data-type="date"
                                                     data-raw-value="{{ $item->arribo_confirmado?->format('Y-m-d') }}"
                                                     data-order="{{ $item->arribo_confirmado?->format('Y-m-d') }}">
-                                                    {{ $item->arribo_confirmado?->format('d/m/Y') }}
+                                                    {{ $item->arribo_confirmado?->format('d/m/y') }}
                                                 </td>
                                                 <td data-search="{{ $item->estado }}" data-order="{{ $item->estado }}">
                                                     @php
@@ -224,13 +224,17 @@
         #tablaLogistica {
             table-layout: fixed;
             width: 100%;
-            min-width: 1400px;
             font-size: calc(1em - 1px);
         }
 
         #tablaLogistica th {
             white-space: normal;
             vertical-align: middle;
+        }
+
+        #tablaLogistica th,
+        #tablaLogistica td {
+            padding: 0.4rem 0.3rem;
         }
 
         #tablaLogistica td {
@@ -242,6 +246,15 @@
 
         #tablaLogistica td:has(.dropdown) {
             overflow: visible;
+        }
+
+        #tablaLogistica td.editable-cell.editing {
+            overflow: visible;
+            z-index: 5;
+        }
+
+        .editable-cell input[type="date"] {
+            width: 150px;
         }
 
         .editable-cell.editing {
@@ -279,6 +292,8 @@
         }
 
         .proveedor-link {
+            white-space: normal;
+            word-break: break-word;
             cursor: pointer;
             border-bottom: 1px dashed #6c757d;
         }
@@ -510,7 +525,7 @@
                         if (type === 'date') {
                             if (value) {
                                 const parts = value.split('-');
-                                cell.textContent = parts[2] + '/' + parts[1] + '/' + parts[0];
+                                cell.textContent = parts[2] + '/' + parts[1] + '/' + parts[0].slice(-2);
                             } else {
                                 cell.textContent = '';
                             }
