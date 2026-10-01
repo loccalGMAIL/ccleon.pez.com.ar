@@ -32,11 +32,27 @@
                             </div>
 
                             <div class="table-responsive">
-                                <table class="table datatable">
+                                <table id="tablaLogistica" class="table">
+                                    <colgroup>
+                                        <col style="width: 10%">
+                                        <col style="width: 5%">
+                                        <col style="width: 6%">
+                                        <col style="width: 9%">
+                                        <col style="width: 9%">
+                                        <col style="width: 9%">
+                                        <col style="width: 8%">
+                                        <col style="width: 9%">
+                                        <col style="width: 9%">
+                                        <col style="width: 7%">
+                                        <col style="width: 6%">
+                                        <col style="width: 9%">
+                                        <col style="width: 4%">
+                                    </colgroup>
                                     <thead>
                                         <tr>
                                             <th class="text-center">Proveedor</th>
                                             <th class="text-center">Rto</th>
+                                            <th class="text-center">N° Fac.</th>
                                             <th class="text-center">Fecha Pedido</th>
                                             <th class="text-center">ETD</th>
                                             <th class="text-center">ETA</th>
@@ -46,13 +62,13 @@
                                             <th class="text-center">Estado</th>
                                             <th class="text-center">Pago</th>
                                             <th class="text-center">Observaciones</th>
-                                            <th class="text-center">Acciones</th>
+                                            <th class="text-center"><span class="visually-hidden">Acciones</span></th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         @foreach ($items as $item)
                                             <tr class="text-center" data-row-id="{{ $item->id }}">
-                                                <td>
+                                                <td data-search="{{ $item->proveedor->razonSocialProveedor ?? '' }}" data-order="{{ $item->proveedor->razonSocialProveedor ?? '' }}">
                                                     <div class="dropdown">
                                                         <span id="badge-proveedor-{{ $item->id }}"
                                                             class="proveedor-link"
@@ -76,18 +92,25 @@
                                                     {{ $item->rto }}
                                                 </td>
                                                 <td class="editable-cell" data-id="{{ $item->id }}"
+                                                    data-field="nro_factura" data-type="factura">
+                                                    {{ $item->nro_factura }}
+                                                </td>
+                                                <td class="editable-cell" data-id="{{ $item->id }}"
                                                     data-field="fecha_pedido" data-type="date"
-                                                    data-raw-value="{{ $item->fecha_pedido?->format('Y-m-d') }}">
+                                                    data-raw-value="{{ $item->fecha_pedido?->format('Y-m-d') }}"
+                                                    data-order="{{ $item->fecha_pedido?->format('Y-m-d') }}">
                                                     {{ $item->fecha_pedido?->format('d/m/Y') }}
                                                 </td>
                                                 <td class="editable-cell" data-id="{{ $item->id }}" data-field="etd"
                                                     data-type="date"
-                                                    data-raw-value="{{ $item->etd?->format('Y-m-d') }}">
+                                                    data-raw-value="{{ $item->etd?->format('Y-m-d') }}"
+                                                    data-order="{{ $item->etd?->format('Y-m-d') }}">
                                                     {{ $item->etd?->format('d/m/Y') }}
                                                 </td>
                                                 <td class="editable-cell" data-id="{{ $item->id }}" data-field="eta"
                                                     data-type="date"
-                                                    data-raw-value="{{ $item->eta?->format('Y-m-d') }}">
+                                                    data-raw-value="{{ $item->eta?->format('Y-m-d') }}"
+                                                    data-order="{{ $item->eta?->format('Y-m-d') }}">
                                                     {{ $item->eta?->format('d/m/Y') }}
                                                 </td>
                                                 <td class="editable-cell" data-id="{{ $item->id }}"
@@ -100,10 +123,11 @@
                                                 </td>
                                                 <td class="editable-cell" data-id="{{ $item->id }}"
                                                     data-field="arribo_confirmado" data-type="date"
-                                                    data-raw-value="{{ $item->arribo_confirmado?->format('Y-m-d') }}">
+                                                    data-raw-value="{{ $item->arribo_confirmado?->format('Y-m-d') }}"
+                                                    data-order="{{ $item->arribo_confirmado?->format('Y-m-d') }}">
                                                     {{ $item->arribo_confirmado?->format('d/m/Y') }}
                                                 </td>
-                                                <td>
+                                                <td data-search="{{ $item->estado }}" data-order="{{ $item->estado }}">
                                                     @php
                                                         $badgeClass = match($item->estado) {
                                                             'Pendiente' => 'bg-warning',
@@ -130,7 +154,7 @@
                                                         </ul>
                                                     </div>
                                                 </td>
-                                                <td>
+                                                <td data-search="{{ $item->pago }}" data-order="{{ $item->pago }}">
                                                     @php
                                                         $pagoBadgeClass = $item->pago === 'Pagado' ? 'bg-success' : 'bg-danger';
                                                     @endphp
@@ -148,7 +172,9 @@
                                                     </div>
                                                 </td>
                                                 <td class="editable-cell" data-id="{{ $item->id }}"
-                                                    data-field="observaciones" data-type="text">
+                                                    data-field="observaciones" data-type="text" data-limit="30"
+                                                    data-raw-value="{{ $item->observaciones }}"
+                                                    data-tooltip="{{ $item->observaciones }}">
                                                     {{ Str::limit($item->observaciones, 30) }}
                                                 </td>
                                                 <td>
@@ -195,6 +221,29 @@
             font-size: 12px;
         }
 
+        #tablaLogistica {
+            table-layout: fixed;
+            width: 100%;
+            min-width: 1400px;
+            font-size: calc(1em - 1px);
+        }
+
+        #tablaLogistica th {
+            white-space: normal;
+            vertical-align: middle;
+        }
+
+        #tablaLogistica td {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            vertical-align: middle;
+        }
+
+        #tablaLogistica td:has(.dropdown) {
+            overflow: visible;
+        }
+
         .editable-cell.editing {
             padding: 0 !important;
             background-color: #e8f4ff !important;
@@ -204,14 +253,18 @@
             content: none;
         }
 
-        .editable-cell input,
+                .editable-cell input,
         .editable-cell select {
+            position: absolute;
+            top: 0;
+            left: 0;
             width: 100%;
             height: 100%;
+            box-sizing: border-box;
             border: 2px solid #0d6efd;
             padding: 0.375rem 0.5rem;
             outline: none;
-            font-size: 0.875rem;
+            font-size: inherit;
         }
 
         .celda-desactivada {
@@ -267,11 +320,57 @@
                 'Cerrado': 'bg-secondary',
             };
 
+            // --- Tabla (jQuery DataTables conserva las filas originales y sus eventos) ---
+            const tabla = $('#tablaLogistica').DataTable({
+                autoWidth: false,
+                order: [[3, 'desc']],
+                pageLength: 15,
+                lengthMenu: [[10, 15, 25, 50, -1], [10, 15, 25, 50, 'Todos']],
+                columnDefs: [{ orderable: false, searchable: false, targets: -1 }],
+                language: {
+                    search: 'Buscar:',
+                    lengthMenu: 'Registros por pagina: _MENU_',
+                    info: 'Mostrando _START_ a _END_ de _TOTAL_ registros',
+                    infoEmpty: 'Sin registros',
+                    infoFiltered: '(filtrado de _MAX_ registros)',
+                    zeroRecords: 'No se encontraron coincidencias',
+                    emptyTable: 'No hay registros para mostrar',
+                    paginate: { first: 'Primero', last: 'Ultimo', next: 'Siguiente', previous: 'Anterior' }
+                }
+            });
+
+            const tablaEl = document.getElementById('tablaLogistica');
+
+            // Eventos delegados: siguen funcionando al paginar, ordenar o buscar
+            function delegar(selector, handler) {
+                tablaEl.addEventListener('click', function(e) {
+                    const el = e.target.closest(selector);
+                    if (el && tablaEl.contains(el)) {
+                        handler.call(el, e);
+                    }
+                });
+            }
+
+            // Mantiene sincronizados los datos internos de DataTables (busqueda/orden) con lo mostrado
+            function sincronizarCelda(el, valorOrden) {
+                const td = el.closest('td');
+                if (!td) return;
+                if (valorOrden !== undefined) {
+                    td.setAttribute('data-order', valorOrden);
+                    td.setAttribute('data-search', valorOrden);
+                }
+                tabla.cell(td).invalidate('dom');
+            }
+
+            function textoRecortado(texto, limite) {
+                return texto.length > limite ? texto.substring(0, limite) + '...' : texto;
+            }
+
             // --- Edicion inline ---
             let activeEditCell = null;
 
             function startEditing(cell) {
-                if (cell.classList.contains('celda-desactivada')) return;
+                if (cell.classList.contains('celda-desactivada') || cell.classList.contains('editing')) return;
 
                 // Si ya hay una celda en edicion, guardarla primero
                 if (activeEditCell && activeEditCell !== cell) {
@@ -292,6 +391,16 @@
                     input = document.createElement('input');
                     input.type = 'date';
                     input.value = rawValue || '';
+                } else if (type === 'factura') {
+                    input = document.createElement('input');
+                    input.type = 'text';
+                    input.inputMode = 'numeric';
+                    input.maxLength = 5;
+                    input.pattern = '\\d{1,5}';
+                    input.value = rawValue || '';
+                    input.addEventListener('input', function() {
+                        this.value = this.value.replace(/\D/g, '').substring(0, 5);
+                    });
                 } else {
                     // text
                     input = document.createElement('input');
@@ -407,8 +516,18 @@
                             }
                             cell.dataset.rawValue = value || '';
                         } else {
-                            cell.textContent = value;
+                            const valorFinal = (data.value === null || data.value === undefined) ? '' : String(data.value);
+                            const limite = parseInt(cell.dataset.limit || '0', 10);
+                            cell.textContent = limite ? textoRecortado(valorFinal, limite) : valorFinal;
+                            if (cell.hasAttribute('data-raw-value') || limite) {
+                                cell.dataset.rawValue = valorFinal;
+                                cell.dataset.tooltip = valorFinal;
+                            }
                         }
+                        if (type === 'date') {
+                            cell.setAttribute('data-order', value || '');
+                        }
+                        tabla.cell(cell).invalidate('dom');
                         activeEditCell = null;
                     } else {
                         // Restaurar valor original en caso de error
@@ -426,15 +545,13 @@
             }
 
             // Inicializar celdas editables
-            document.querySelectorAll('.editable-cell').forEach(function(cell) {
-                cell.addEventListener('click', function() {
-                    startEditing(this);
-                });
+            delegar('.editable-cell', function() {
+                startEditing(this);
             });
 
             // --- Cambiar proveedor (dropdown badge) ---
-            document.querySelectorAll('.cambiar-proveedor').forEach(function(link) {
-                link.addEventListener('click', function(e) {
+            delegar('.cambiar-proveedor', function(e) {
+                {
                     e.preventDefault();
 
                     const id = this.dataset.id;
@@ -471,6 +588,7 @@
                         badgeElement.classList.remove('opacity-75');
                         if (data.success) {
                             badgeElement.textContent = data.displayValue || nuevoProveedorNombre;
+                            sincronizarCelda(badgeElement, badgeElement.textContent.trim());
                         } else {
                             badgeElement.textContent = nombreOriginal;
                             Swal.fire('Error', data.message || 'No se pudo actualizar el proveedor', 'error');
@@ -482,12 +600,12 @@
                         badgeElement.classList.remove('opacity-75');
                         Swal.fire('Error', 'No se pudo actualizar el proveedor', 'error');
                     });
-                });
+                }
             });
 
             // --- Cambiar estado (dropdown badge) ---
-            document.querySelectorAll('.cambiar-estado').forEach(function(link) {
-                link.addEventListener('click', function(e) {
+            delegar('.cambiar-estado', function(e) {
+                {
                     e.preventDefault();
 
                     const id = this.dataset.id;
@@ -524,6 +642,9 @@
                     })
                     .then(function(data) {
                         badgeElement.classList.remove('opacity-75');
+                        if (data.success) {
+                            sincronizarCelda(badgeElement, nuevoEstado);
+                        }
                         if (!data.success) {
                             // Revertir
                             badgeElement.textContent = estadoOriginal;
@@ -539,12 +660,12 @@
                         if (claseOriginal) badgeElement.classList.add(claseOriginal);
                         Swal.fire('Error', 'No se pudo actualizar el estado', 'error');
                     });
-                });
+                }
             });
 
             // --- Cambiar pago (dropdown badge) ---
-            document.querySelectorAll('.cambiar-pago').forEach(function(link) {
-                link.addEventListener('click', function(e) {
+            delegar('.cambiar-pago', function(e) {
+                {
                     e.preventDefault();
 
                     const id = this.dataset.id;
@@ -579,6 +700,9 @@
                     })
                     .then(function(data) {
                         badgeElement.classList.remove('opacity-75');
+                        if (data.success) {
+                            sincronizarCelda(badgeElement, nuevoPago);
+                        }
                         if (!data.success) {
                             badgeElement.textContent = pagoOriginal;
                             badgeElement.classList.remove('bg-danger', 'bg-success');
@@ -593,12 +717,12 @@
                         if (claseOriginal) badgeElement.classList.add(claseOriginal);
                         Swal.fire('Error', 'No se pudo actualizar el pago', 'error');
                     });
-                });
+                }
             });
 
             // --- Eliminar registro ---
-            document.querySelectorAll('.eliminar-registro').forEach(function(btn) {
-                btn.addEventListener('click', function(e) {
+            delegar('.eliminar-registro', function(e) {
+                {
                     e.preventDefault();
                     const id = this.dataset.id;
                     const row = this.closest('tr');
@@ -628,8 +752,8 @@
                             })
                             .then(function(data) {
                                 if (data.success) {
-                                    if (row && row.parentNode) {
-                                        row.parentNode.removeChild(row);
+                                    if (row) {
+                                        tabla.row(row).remove().draw(false);
                                     }
                                     Swal.fire('Eliminado!', 'El registro ha sido eliminado.', 'success');
                                 } else {
@@ -642,7 +766,7 @@
                             });
                         }
                     });
-                });
+                }
             });
 
         });

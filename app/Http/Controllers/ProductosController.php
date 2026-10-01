@@ -7,6 +7,7 @@ use App\Models\Cotizacion;
 use App\Models\Producto;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 use Illuminate\Http\Request;
 
@@ -22,6 +23,7 @@ class ProductosController extends Controller
 
         // Si hay un proveedor seleccionado, cargar sus productos
         if ($proveedorSeleccionado) {
+            $this->autorizarProveedor($proveedorSeleccionado, 'productos');
             $productos = Producto::where('proveedores_id', $proveedorSeleccionado)->get();
         }
         return view('modules.productos.index', compact(
@@ -51,6 +53,8 @@ class ProductosController extends Controller
             'costo' => 'required|numeric|min:0',
             'modificacion' => 'nullable|date',
         ]);
+
+        $this->autorizarProveedor($request->proveedores_id, 'productos');
 
         try {
             // Crear el nuevo producto
@@ -92,7 +96,10 @@ class ProductosController extends Controller
     {
         try {
             $producto = Producto::findOrFail($id);
+            $this->autorizarProveedor($producto->proveedores_id, 'productos');
             return response()->json($producto);
+        } catch (HttpException $e) {
+            throw $e;
         } catch (\Exception $e) {
             return response()->json(['error' => 'Producto no encontrado'], 404);
         }
@@ -118,6 +125,7 @@ class ProductosController extends Controller
 
         try {
             $producto = Producto::findOrFail($id);
+            $this->autorizarProveedor($producto->proveedores_id, 'productos');
             $datosAnteriores = $producto->toArray();
 
             $producto->codigo = $request->codigo;
@@ -142,6 +150,8 @@ class ProductosController extends Controller
             // Redirigir a la vista del proveedor seleccionado
             return redirect()->route('productos', ['proveedor_id' => $producto->proveedores_id])
                 ->with('swal_success', 'Producto actualizado correctamente');
+        } catch (HttpException $e) {
+            throw $e;
         } catch (\Exception $e) {
             Log::error('Error al actualizar producto: ' . $e->getMessage());
 
@@ -164,6 +174,7 @@ class ProductosController extends Controller
     {
         try {
             $producto = Producto::findOrFail($id);
+            $this->autorizarProveedor($producto->proveedores_id, 'productos');
             $datosAnteriores = $producto->toArray();
             $nombre = $producto->nombre;
             $proveedorId = $producto->proveedores_id;
@@ -175,6 +186,8 @@ class ProductosController extends Controller
             // Redirigir a la vista del proveedor seleccionado
             return redirect()->route('productos', ['proveedor_id' => $producto->proveedores_id])
                 ->with('swal_success', 'Producto borrado correctamente');
+        } catch (HttpException $e) {
+            throw $e;
         } catch (\Exception $e) {
             Log::error('Error al eliminar producto: ' . $e->getMessage());
 

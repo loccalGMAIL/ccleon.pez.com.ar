@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use App\Models\AuditLog;
 use App\Models\Observacion;
 use App\Models\rto;
+use App\Models\Proveedor;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class Observaciones extends Controller
 {
@@ -15,7 +17,9 @@ class Observaciones extends Controller
     public function index()
     {
         $titulo = 'Observaciones';
-        $items = Observacion::with('rto')
+        $idsPermitidos = Proveedor::idsPermitidos('remitos');
+        $items = Observacion::with('rto.proveedor')
+            ->whereHas('rto', fn ($q) => $q->when($idsPermitidos !== null, fn ($r) => $r->whereIn('proveedores_id', $idsPermitidos)))
             ->orderBy('created_at', 'desc')
             ->get();
         
@@ -40,6 +44,8 @@ class Observaciones extends Controller
             'descripcionObservacionesRto' => 'required|string',
         ]);
 
+        $this->autorizarProveedor(rto::findOrFail($request->Rto_id)->proveedores_id, 'remitos');
+
         $observacion = Observacion::create([
             'Rto_id' => $request->Rto_id,
             'descripcionObservacionesRto' => $request->descripcionObservacionesRto,
@@ -57,6 +63,7 @@ class Observaciones extends Controller
     public function show(string $id)
     {
         $remito = rto::with('proveedor')->findOrFail($id);
+        $this->autorizarProveedor($remito->proveedores_id, 'remitos');
         $items = Observacion::where('Rto_id', $id)->get();
 
         return view('modules.rto.observaciones.index', [
@@ -84,7 +91,8 @@ class Observaciones extends Controller
             'descripcionObservacionesRto' => 'required|string',
         ]);
 
-        $observacion = Observacion::findOrFail($id);
+        $observacion = Observacion::with('rto')->findOrFail($id);
+        $this->autorizarProveedor($observacion->rto?->proveedores_id, 'remitos');
         $datosAnteriores = $observacion->toArray();
 
         $observacion->update([
@@ -111,13 +119,16 @@ class Observaciones extends Controller
     public function destroy($id)
     {
         try {
-            $observacion = Observacion::findOrFail($id);
+            $observacion = Observacion::with('rto')->findOrFail($id);
+            $this->autorizarProveedor($observacion->rto?->proveedores_id, 'remitos');
             $datosAnteriores = $observacion->toArray();
             $observacion->delete();
 
             AuditLog::registrar('observaciones', 'eliminar', "Elimino observacion #{$id}", 'Observacion', (int) $id, $datosAnteriores);
 
             return response()->json(['success' => true, 'message' => 'Observacion eliminada correctamente']);
+        } catch (HttpException $e) {
+            throw $e;
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => 'Error al eliminar la observacion: ' . $e->getMessage()]);
         }

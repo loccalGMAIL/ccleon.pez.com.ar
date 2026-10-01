@@ -53,6 +53,11 @@
   <!-- Template Main JS File -->
   <script src="{{asset('NiceAdmin/assets/js/main.js')}}"></script>
 
+  <!-- Recarga el login si queda abierto mucho tiempo, para que el token CSRF no venza -->
+  <script>
+    setTimeout(function () { window.location.reload(); }, 60 * 60 * 1000);
+  </script>
+
 </body>
 
 </html>

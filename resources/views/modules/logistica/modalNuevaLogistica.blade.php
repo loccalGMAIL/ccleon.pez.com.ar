@@ -35,6 +35,12 @@
                             <input type="text" class="form-control" id="rto" name="rto" maxlength="100">
                         </div>
                         <div class="col-md-6">
+                            <label for="nro_factura" class="form-label">Nro. Factura</label>
+                            <input type="text" class="form-control" id="nro_factura" name="nro_factura"
+                                inputmode="numeric" maxlength="5" pattern="\d{1,5}"
+                                title="Hasta 5 digitos numericos" placeholder="00000">
+                        </div>
+                        <div class="col-md-6">
                             <label for="etd" class="form-label">ETD (Salida)</label>
                             <input type="date" class="form-control" id="etd" name="etd">
                         </div>

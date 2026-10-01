@@ -85,7 +85,7 @@
                                             <td>{{ $item->rto->proveedor->razonSocialProveedor }}</td>
                                             <td>{{ $item->producto }}</td>
                                             <td>{{ $item->cantidad }}</td>
-                                            <td>{{ Str::limit($item->observaciones, 30) }}</td>
+                                            <td data-tooltip="{{ $item->observaciones }}">{{ Str::limit($item->observaciones, 30) }}</td>
                                             <td>
                                                 <span
                                                     class="badge {{ $item->estadoReclamoRto == 'pendiente' ? 'bg-warning' : 'bg-success' }}">

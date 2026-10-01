@@ -142,6 +142,124 @@
       }
     });
   </script>
+
+  <!-- Tooltip automatico en celdas de tablas cuando su contenido esta oculto o recortado -->
+  <style>
+    .tooltip-celda .tooltip-inner {
+      max-width: 360px;
+      text-align: left;
+      white-space: pre-line;
+    }
+  </style>
+  <script>
+    (function () {
+      let celdaActual = null;
+
+      // Texto completo de la celda: data-tooltip si el servidor lo recorto, o su propio texto
+      function textoCompleto(celda) {
+        return (celda.dataset.tooltip !== undefined ? celda.dataset.tooltip : celda.innerText).trim();
+      }
+
+      function contenidoOculto(celda) {
+        if (celda.dataset.tooltip !== undefined) {
+          return celda.dataset.tooltip.trim() !== celda.innerText.trim();
+        }
+        return celda.scrollWidth > celda.clientWidth + 1 || celda.scrollHeight > celda.clientHeight + 1;
+      }
+
+      function ocultar() {
+        if (!celdaActual) return;
+        const instancia = bootstrap.Tooltip.getInstance(celdaActual);
+        if (instancia) instancia.dispose();
+        celdaActual = null;
+      }
+
+      document.addEventListener('mouseover', function (e) {
+        const celda = e.target.closest('table td, table th');
+        if (!celda || celda === celdaActual) return;
+
+        ocultar();
+
+        if (celda.classList.contains('editing') || celda.querySelector('.dropdown, input, select, textarea')) return;
+
+        const texto = textoCompleto(celda);
+        if (!texto || !contenidoOculto(celda)) return;
+
+        celdaActual = celda;
+        new bootstrap.Tooltip(celda, {
+          title: texto,
+          trigger: 'manual',
+          container: 'body',
+          placement: 'top',
+          customClass: 'tooltip-celda'
+        }).show();
+      });
+
+      document.addEventListener('mouseout', function (e) {
+        if (celdaActual && !celdaActual.contains(e.relatedTarget)) ocultar();
+      });
+
+      document.addEventListener('click', ocultar);
+      document.addEventListener('scroll', ocultar, true);
+    })();
+  </script>
+
+  <!-- Mantiene viva la sesion y maneja el error 419 (sesion expirada) -->
+  <script>
+    (function () {
+      const urlLogin = @json(route('login'));
+      const urlKeepAlive = @json(route('keep-alive'));
+      let avisando = false;
+
+      function sesionExpirada() {
+        if (avisando) return;
+        avisando = true;
+        Swal.fire({
+          icon: 'warning',
+          title: 'Sesión expirada',
+          text: 'Tu sesión expiró. Volvé a ingresar para continuar.',
+          confirmButtonText: 'Ir al login',
+          allowOutsideClick: false
+        }).then(() => { window.location.href = urlLogin; });
+      }
+
+      function actualizarToken(token) {
+        const meta = document.querySelector('meta[name="csrf-token"]');
+        if (meta) meta.setAttribute('content', token);
+        document.querySelectorAll('input[name="_token"]').forEach(function (input) { input.value = token; });
+        if (window.jQuery) {
+          jQuery.ajaxSetup({ headers: { 'X-CSRF-TOKEN': token } });
+        }
+      }
+
+      const fetchOriginal = window.fetch;
+      window.fetch = function () {
+        return fetchOriginal.apply(this, arguments).then(function (response) {
+          if (response.status === 419) sesionExpirada();
+          return response;
+        });
+      };
+
+      if (window.jQuery) {
+        jQuery(document).ajaxError(function (event, xhr) {
+          if (xhr.status === 419) sesionExpirada();
+        });
+      }
+
+      setInterval(function () {
+        fetchOriginal(urlKeepAlive, { headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }, credentials: 'same-origin' })
+          .then(function (response) {
+            if (response.status === 401 || response.status === 419 || response.redirected) {
+              sesionExpirada();
+              return null;
+            }
+            return response.json();
+          })
+          .then(function (data) { if (data && data.token) actualizarToken(data.token); })
+          .catch(function () {});
+      }, 10 * 60 * 1000);
+    })();
+  </script>
   @stack('scripts')
 </body>
 </html>

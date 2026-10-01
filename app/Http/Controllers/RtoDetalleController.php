@@ -9,6 +9,7 @@ use App\Models\AuditLog;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Validator;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 // use Illuminate\Support\Facades\Response;
 
 class RtoDetalleController extends Controller
@@ -35,6 +36,8 @@ class RtoDetalleController extends Controller
             return back()->withErrors($validator)->withInput();
         }
     
+        $this->autorizarProveedor(rto::findOrFail($request->rto_id)->proveedores_id, 'remitos');
+
         try {
             // Calcular el subtotal
             $subtotal = 0;
@@ -66,6 +69,8 @@ class RtoDetalleController extends Controller
             // Redireccionar al detalle del remito con mensaje de éxito
             return redirect()->route('remitos.edit', ['id' => $request->rto_id])
                 ->with('success', 'Elemento agregado correctamente al remito');
+        } catch (HttpException $e) {
+            throw $e;
         } catch (\Exception $e) {
             // Redireccionar con mensaje de error
             return back()->with('error', 'Error al agregar elemento: ' . $e->getMessage());
@@ -105,9 +110,14 @@ class RtoDetalleController extends Controller
                 return response()->json(['success' => false, 'message' => 'Campo no válido']);
             }
     
+            if (!is_numeric($value) && $value !== null && $value !== '') {
+                return response()->json(['success' => false, 'message' => 'El valor debe ser numerico']);
+            }
+
             if ($field === 'totalFinalRto') {
                 // Si es el total final, actualizar directamente en la tabla Rto
                 $rto = Rto::findOrFail($id);
+                $this->autorizarProveedor($rto->proveedores_id, 'remitos');
                 $rto->totalFinalRto = $value;
                 $rto->save();
     
@@ -125,6 +135,7 @@ class RtoDetalleController extends Controller
     
             // Si no es el total final, continuar con la lógica existente para otros campos
             $detalle = RtoDetalle::findOrFail($id);
+            $this->autorizarProveedor(rto::findOrFail($detalle->rto_id)->proveedores_id, 'remitos');
             $valorAnterior = $detalle->$field;
 
             // Actualizar el campo
@@ -190,6 +201,8 @@ class RtoDetalleController extends Controller
                 'diferencia' => $diferencia,
                 'isRealField' => in_array($field, ['TC_RtoReal', 'valorDolaresRtoReal'])
             ]);
+        } catch (HttpException $e) {
+            throw $e;
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()]);
         }
@@ -199,6 +212,7 @@ class RtoDetalleController extends Controller
     {
         try {
             $detalle = RtoDetalle::findOrFail($id);
+            $this->autorizarProveedor(rto::findOrFail($detalle->rto_id)->proveedores_id, 'remitos');
 
             if (!in_array($field, ['valorDolaresRtoTeorico', 'valorPesosRtoTeorico', 'TC_RtoTeorico', 'subTotalRtoTeorico', 'valorPesosRtoReal','TC_RtoReal', 'subTotalRtoReal'])) {
                 return response()->json(['success' => false, 'message' => 'Campo no válido']);
@@ -208,6 +222,8 @@ class RtoDetalleController extends Controller
                 'success' => true,
                 'value' => $detalle->$field
             ]);
+        } catch (HttpException $e) {
+            throw $e;
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()]);
         }
@@ -218,6 +234,7 @@ class RtoDetalleController extends Controller
         try {
             // Encuentra el detalle a eliminar
             $detalle = RtoDetalle::findOrFail($id);
+            $this->autorizarProveedor(rto::findOrFail($detalle->rto_id)->proveedores_id, 'remitos');
             $datosAnteriores = $detalle->toArray();
 
             // Guarda el ID del remito para actualizar totales después
@@ -236,6 +253,8 @@ class RtoDetalleController extends Controller
                 'success' => true,
                 'message' => 'Elemento eliminado correctamente'
             ]);
+        } catch (HttpException $e) {
+            throw $e;
         } catch (\Exception $e) {
             // Registra el error para diagnóstico
             // \Log::error('Error al eliminar detalle: ' . $e->getMessage());

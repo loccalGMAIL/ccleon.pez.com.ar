@@ -13,7 +13,9 @@ class AuthController extends Controller
     public function index()
     {
         $titulo = 'Login de usuarios';        
-        return view('modules.auth.login', compact('titulo'));
+        return response()
+            ->view('modules.auth.login', compact('titulo'))
+            ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
     }
     
     public function loguear(Request $request){
@@ -45,25 +47,13 @@ class AuthController extends Controller
         return to_route('home');
     }
 
-    public function logout(){
+    public function logout(Request $request){
         AuditLog::registrar('usuarios', 'logout', "Cerro sesion");
         Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
         return to_route('login');
     }
-
-    public function crearAdmin(){
-        User::create(
-        [
-            'name' => 'Claudio',
-            'email' => 'c@c.com',
-            'password' => Hash::make('12345'),
-            'activo' => true,
-            'rol'=> 'admin' 
-        ]);
-
-        return "Admin creado con exito!!!";
-    }
-
 
 }
 

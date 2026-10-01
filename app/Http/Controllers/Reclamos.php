@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use App\Models\AuditLog;
 Use App\Models\Reclamo;
 use App\Models\rto;
+use App\Models\Proveedor;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class Reclamos extends Controller
 {
@@ -16,7 +18,10 @@ class Reclamos extends Controller
     {
         $titulo = 'Reclamos';
 
-        $query = Reclamo::with('rto');
+        $idsPermitidos = Proveedor::idsPermitidos('remitos');
+
+        $query = Reclamo::with('rto.proveedor')
+            ->whereHas('rto', fn ($q) => $q->when($idsPermitidos !== null, fn ($r) => $r->whereIn('proveedores_id', $idsPermitidos)));
 
         if ($rtoId) {
             $query->where('Rto_id', $rtoId);
@@ -52,6 +57,8 @@ class Reclamos extends Controller
             'resolucionReclamoRto' => 'nullable|required_if:estadoReclamoRto,resuelto|string',
         ]);
 
+        $this->autorizarProveedor(rto::findOrFail($request->Rto_id)->proveedores_id, 'remitos');
+
         $reclamo = Reclamo::create([
             'Rto_id' => $request->Rto_id,
             'producto' => $request->producto,
@@ -72,7 +79,8 @@ class Reclamos extends Controller
     public function show(string $id)
     {
         $remito = Rto::with('proveedor')->findOrFail($id);
-        $items = Reclamo::with('proveedor')
+        $this->autorizarProveedor($remito->proveedores_id, 'remitos');
+        $items = Reclamo::with('rto.proveedor')
             ->where('Rto_id', $id)
             ->get();
         
@@ -108,7 +116,8 @@ class Reclamos extends Controller
            'resolucionReclamoRto' => 'nullable|required_if:estadoReclamoRto,resuelto|string',
        ]);
 
-       $reclamo = Reclamo::findOrFail($id);
+       $reclamo = Reclamo::with('rto')->findOrFail($id);
+       $this->autorizarProveedor($reclamo->rto?->proveedores_id, 'remitos');
        $datosAnteriores = $reclamo->toArray();
        $reclamo->update($request->only(['producto', 'cantidad', 'observaciones', 'estadoReclamoRto', 'resolucionReclamoRto']));
 
@@ -123,13 +132,16 @@ class Reclamos extends Controller
     public function destroy($id)
     {
         try {
-            $reclamo = Reclamo::findOrFail($id);
+            $reclamo = Reclamo::with('rto')->findOrFail($id);
+            $this->autorizarProveedor($reclamo->rto?->proveedores_id, 'remitos');
             $datosAnteriores = $reclamo->toArray();
             $reclamo->delete();
 
             AuditLog::registrar('reclamos', 'eliminar', "Elimino reclamo #{$id}", 'Reclamo', (int) $id, $datosAnteriores);
 
             return response()->json(['success' => true, 'message' => 'Reclamo eliminado correctamente']);
+        } catch (HttpException $e) {
+            throw $e;
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => 'Error al eliminar el reclamo: ' . $e->getMessage()]);
         }

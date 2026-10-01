@@ -118,6 +118,10 @@ class Usuarios extends Controller
      */
     public function destroy(string $id)
     {
+        if ((int) $id === Auth::id()) {
+            return response()->json(['success' => false, 'message' => 'No podés eliminar tu propio usuario']);
+        }
+
         try {
             $item = User::findOrFail($id);
             $datosAnteriores = $item->toArray();
@@ -178,6 +182,10 @@ class Usuarios extends Controller
 
     public function estado(Request $request, $id)
     {
+        if ((int) $id === Auth::id()) {
+            return response()->json(['success' => false, 'message' => 'No podés desactivar tu propio usuario']);
+        }
+
         try {
             $item = User::findOrFail($id);
             $estadoAnterior = $item->activo;
