@@ -1,7 +1,9 @@
 <?php
 namespace App\Http\Controllers;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use App\Models\Proveedor;
 use App\Models\rto;
 use App\Models\Camion;
@@ -43,6 +45,7 @@ class RtoController extends Controller
 {
     try {
         $remito = rto::findOrFail($id);
+        $this->autorizarProveedor($remito->proveedores_id, 'remitos');
         $datosAnteriores = $remito->toArray();
 
         $remito->fechaIngresoRto = $request->input('fechaIngresoRto');
@@ -52,19 +55,12 @@ class RtoController extends Controller
         AuditLog::registrar('remitos', 'editar', "Actualizo remito #{$remito->id} ({$remito->nroFacturaRto})", 'Rto', $remito->id, $datosAnteriores, $remito->fresh()->toArray());
 
         return response()->json(['success' => true, 'message' => 'Remito actualizado correctamente']);
+    } catch (HttpException $e) {
+        throw $e;
     } catch (\Exception $e) {
         return response()->json(['success' => false, 'message' => $e->getMessage()]);
     }
 }
-
-    public function create()
-    {
-        $titulo = 'Crear Remito';
-        $proveedores = Proveedor::permitidos('remitos')->where('estadoProveedor', '1')
-            ->orderBy('razonSocialProveedor')
-            ->get();
-        return view('modules.rto.create', compact('titulo', 'proveedores'));
-    }
 
     public function store(Request $request)
     {
@@ -74,31 +70,29 @@ class RtoController extends Controller
             'idProveedor' => 'required|exists:proveedores,id',
         ]);
 
-        // Buscar el camión para este proveedor
-        $camion = Camion::where('proveedores_id', $request->idProveedor)->first();
+        $this->autorizarProveedor($request->idProveedor, 'remitos');
 
-        // Si no existe un camión para este proveedor, creamos uno con contador inicial
-        if (!$camion) {
-            $camion = new Camion();
-            $camion->contador = 1;
-            $camion->proveedores_id = $request->idProveedor;
-            $camion->save();
-        }
+        $remito = DB::transaction(function () use ($request) {
+            $camion = Camion::where('proveedores_id', $request->idProveedor)->lockForUpdate()->first();
 
-        // Crear el remito usando el contador del camión como número de camión
-        $remito = new Rto();
-        $remito->fechaIngresoRto = $request->fechaIngresoRto;
-        $remito->nroFacturaRto = $request->nroFacturaRto;
-        $remito->proveedores_id = $request->idProveedor;
-        $remito->camion = $camion->contador; // Usar el contador como número de camión
+            if (!$camion) {
+                $camion = Camion::create([
+                    'contador' => 1,
+                    'proveedores_id' => $request->idProveedor,
+                ]);
+            }
 
-        // Incrementar el contador para el próximo remito
-        $camion->contador += 1;
-        $camion->save();
+            $remito = new Rto();
+            $remito->fechaIngresoRto = $request->fechaIngresoRto;
+            $remito->nroFacturaRto = $request->nroFacturaRto;
+            $remito->proveedores_id = $request->idProveedor;
+            $remito->camion = $camion->contador;
+            $remito->save();
 
-        // Guardar el remito
-        $remito->save();
+            $camion->increment('contador');
 
+            return $remito;
+        });
         AuditLog::registrar('remitos', 'crear', "Creo remito #{$remito->camion}", 'Rto', $remito->id, null, $remito->toArray());
 
         return redirect()->route('remitos.edit', $remito->id)
@@ -135,52 +129,6 @@ class RtoController extends Controller
             'proveedores' => $proveedores,
             'elementosRto' => $elementosRto
         ]);
-    }
-
-    public function update(Request $request, $id)
-    {
-        $request->validate([
-            'fechaIngresoRto' => 'required|date',
-            'nroFacturaRto' => 'required|string|max:50',
-            'idProveedor' => 'required|exists:proveedores,id',
-        ]);
-
-        $remito = Rto::findOrFail($id);
-        $datosAnteriores = $remito->toArray();
-
-        // Actualizar datos básicos del remito
-        $remito->fechaIngresoRto = $request->fechaIngresoRto;
-        $remito->nroFacturaRto = $request->nroFacturaRto;
-
-        // Si cambia el proveedor, manejamos la lógica del camión
-        if ($remito->proveedores_id != $request->idProveedor) {
-            $remito->proveedores_id = $request->idProveedor;
-
-            // Buscar el camión para el nuevo proveedor
-            $camion = Camion::where('proveedores_id', $request->idProveedor)->first();
-
-            // Si no existe un camión para este proveedor, creamos uno
-            if (!$camion) {
-                $camion = new Camion();
-                $camion->contador = 1;
-                $camion->proveedores_id = $request->idProveedor;
-                $camion->save();
-            }
-
-            // Usar el contador actual como número de camión
-            $remito->camion = $camion->contador;
-
-            // Incrementar el contador para el próximo remito
-            $camion->contador += 1;
-            $camion->save();
-        }
-
-        $remito->save();
-
-        AuditLog::registrar('remitos', 'editar', "Edito remito #{$remito->id} ({$remito->nroFacturaRto})", 'Rto', $remito->id, $datosAnteriores, $remito->fresh()->toArray());
-
-        return redirect()->route('remitos.edit', $id)
-            ->with('success', 'Remito actualizado correctamente');
     }
 
     public function pendientes(Request $request)
@@ -221,6 +169,7 @@ class RtoController extends Controller
 
         try {
             $remito = rto::findOrFail($id);
+            $this->autorizarProveedor($remito->proveedores_id, 'remitos');
 
             if ($remito->estado !== 'Espera') {
                 return response()->json([
@@ -231,13 +180,14 @@ class RtoController extends Controller
 
             $datosAnteriores = $remito->toArray();
 
-            $camion = Camion::where('proveedores_id', $remito->proveedores_id)->first();
-            if ($camion && $camion->contador > 1) {
-                $camion->contador -= 1;
-                $camion->save();
-            }
+            DB::transaction(function () use ($remito) {
+                $camion = Camion::where('proveedores_id', $remito->proveedores_id)->lockForUpdate()->first();
+                if ($camion && $camion->contador > 1 && (int) $remito->camion === $camion->contador - 1) {
+                    $camion->decrement('contador');
+                }
 
-            $remito->delete();
+                $remito->delete();
+            });
 
             AuditLog::registrar(
                 'remitos', 'eliminar',
@@ -249,6 +199,8 @@ class RtoController extends Controller
                 'success' => true,
                 'message' => 'Remito eliminado correctamente.',
             ]);
+        } catch (HttpException $e) {
+            throw $e;
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
@@ -261,6 +213,7 @@ class RtoController extends Controller
         ]);
 
         $remito = rto::findOrFail($id);
+        $this->autorizarProveedor($remito->proveedores_id, 'remitos');
         $estadoAnterior = $remito->estado;
         $remito->estado = $request->estado;
         $remito->save();

@@ -20,11 +20,12 @@ use App\Http\Controllers\LogisticaController;
 // Route::get('/crear-admin',[AuthController::class, 'crearAdmin'])->name('crear-admin');
 
 Route::get('/', [AuthController::class, 'index'])->name('login');
-Route::get('/logout', [AuthController::class, 'logout'])->name('logout');
-Route::post('/loguear', [AuthController::class, 'loguear'])->name('loguear');
+Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+Route::post('/loguear', [AuthController::class, 'loguear'])->middleware('throttle:10,1')->name('loguear');
 
 Route::middleware(['auth'])->group(function () {
     Route::get('/home', [Dashboard::class, 'index'])->name('home');
+    Route::get('/keep-alive', fn () => response()->json(['token' => csrf_token()]))->name('keep-alive');
     Route::get('/mi-perfil', [Usuarios::class, 'miPerfil'])->name('mi-perfil');
     Route::put('/mi-perfil/actualizar', [Usuarios::class, 'actualizarPerfil'])->name('mi-perfil.actualizar');
 });
@@ -50,7 +51,7 @@ Route::prefix('reclamos')->middleware(['auth', 'Checkrol:reclamos'])->group(func
     Route::get('/', [Reclamos::class, 'index'])->name('reclamos');
     Route::post('/reclamos', [Reclamos::class, 'store'])->name('reclamos.store');
     Route::put('/reclamos/{id}', [Reclamos::class, 'update'])->name('reclamos.update');
-    Route::get('/show/{rtoId?}', [Reclamos::class, 'show'])->name('reclamos.show');
+    Route::get('/show/{rtoId}', [Reclamos::class, 'show'])->name('reclamos.show');
     Route::delete('/destroy/{id}', [Reclamos::class, 'destroy'])->name('reclamos.destroy');
 });
 

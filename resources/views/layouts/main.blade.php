@@ -142,6 +142,63 @@
       }
     });
   </script>
+
+  <!-- Mantiene viva la sesion y maneja el error 419 (sesion expirada) -->
+  <script>
+    (function () {
+      const urlLogin = @json(route('login'));
+      const urlKeepAlive = @json(route('keep-alive'));
+      let avisando = false;
+
+      function sesionExpirada() {
+        if (avisando) return;
+        avisando = true;
+        Swal.fire({
+          icon: 'warning',
+          title: 'Sesión expirada',
+          text: 'Tu sesión expiró. Volvé a ingresar para continuar.',
+          confirmButtonText: 'Ir al login',
+          allowOutsideClick: false
+        }).then(() => { window.location.href = urlLogin; });
+      }
+
+      function actualizarToken(token) {
+        const meta = document.querySelector('meta[name="csrf-token"]');
+        if (meta) meta.setAttribute('content', token);
+        document.querySelectorAll('input[name="_token"]').forEach(function (input) { input.value = token; });
+        if (window.jQuery) {
+          jQuery.ajaxSetup({ headers: { 'X-CSRF-TOKEN': token } });
+        }
+      }
+
+      const fetchOriginal = window.fetch;
+      window.fetch = function () {
+        return fetchOriginal.apply(this, arguments).then(function (response) {
+          if (response.status === 419) sesionExpirada();
+          return response;
+        });
+      };
+
+      if (window.jQuery) {
+        jQuery(document).ajaxError(function (event, xhr) {
+          if (xhr.status === 419) sesionExpirada();
+        });
+      }
+
+      setInterval(function () {
+        fetchOriginal(urlKeepAlive, { headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }, credentials: 'same-origin' })
+          .then(function (response) {
+            if (response.status === 401 || response.status === 419 || response.redirected) {
+              sesionExpirada();
+              return null;
+            }
+            return response.json();
+          })
+          .then(function (data) { if (data && data.token) actualizarToken(data.token); })
+          .catch(function () {});
+      }, 10 * 60 * 1000);
+    })();
+  </script>
   @stack('scripts')
 </body>
 </html>
